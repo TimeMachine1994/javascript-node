@@ -2,7 +2,7 @@ import { error, json } from '@sveltejs/kit';
 export const GET = async ({ url, cookies }) => {
     console.log('🚀 Starting GET request for user meta.');
 
-    const token = cookies.get('jwt');
+    const token = cookies.get('jwt_token');
     console.log('🔑 Token retrieved from cookies:', token );
 
     try {
@@ -59,7 +59,7 @@ export const POST = async ({ request, cookies }) => {
     console.log('🚀 Starting POST request for user meta.');
 
     // Retrieve the JWT token from cookies
-    const token = cookies.get('jwt');
+    const token = cookies.get('jwt_token');
     if (!token) {
         console.error('❌ Missing JWT token in cookies.');
         throw error(401, 'Authentication required');

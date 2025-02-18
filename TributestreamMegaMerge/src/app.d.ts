@@ -14,6 +14,8 @@ declare global {
 				isAdmin: boolean;
 				userMeta: Record<string, any>;
 			};
+			jwt?: string;
+		 
 		}
 		// interface PageData {}
 		// interface PageState {}

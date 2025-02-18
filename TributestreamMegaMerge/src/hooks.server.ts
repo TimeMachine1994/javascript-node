@@ -31,7 +31,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	console.log('🍪 [Hook] All cookies:', cookies);
 
 	// Retrieve the JWT token from cookies (if it exists)
-	const jwt = event.cookies.get('jwt');
+	const jwt = event.cookies.get('jwt_token');
 	// Retrieve the user data cookie, which should contain roles, capabilities, meta data, etc.
 	const userCookie = event.cookies.get('user');
 

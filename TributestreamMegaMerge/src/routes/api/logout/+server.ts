@@ -23,6 +23,7 @@ export async function POST({ cookies, locals }: RequestEvent) {
             secure: true,
             sameSite: 'strict'
         });
+    
         console.log('🍪 [Logout API] Cleared JWT token cookie');
 
         // Clear the user ID cookie - match exact settings from login
@@ -34,6 +35,14 @@ export async function POST({ cookies, locals }: RequestEvent) {
         });
         console.log('🍪 [Logout API] Cleared user ID cookie');
 
+                    // Step 7: Set user data with roles and meta data (client-accessible)
+                    cookies.delete('user', {
+                      
+                        path: '/',
+                        secure: true,
+                        sameSite: 'strict',
+                        maxAge: 60 * 60 * 24 // 24 hours
+                    });
         // Clear locals state using undefined
         locals.jwt_token = undefined;
         locals.user_id = undefined;

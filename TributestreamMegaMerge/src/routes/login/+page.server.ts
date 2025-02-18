@@ -46,7 +46,7 @@ export const actions: Actions = {
             console.log('✅ [Login Action] Extracted user_id:', result.user_id);
 
             // Step 4: Set JWT token cookie (HTTP-only)
-            cookies.set('jwt', result.token, {
+            cookies.set('jwt_token', result.token, {
                 path: '/',
                 httpOnly: true,
                 secure: true,
