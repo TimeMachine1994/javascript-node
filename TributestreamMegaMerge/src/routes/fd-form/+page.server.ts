@@ -304,9 +304,24 @@ export const actions = {
                     message: metaResult.message || 'Failed to save user metadata' 
                 });
             }
+             let roles: string[] = []; // Fix: Ensure `roles` is defined before using it
+             console.log('Metadata saved successfully');
+            // Step 7: Set user data with roles and meta data (client-accessible)
+            cookies.set('user', JSON.stringify({
+                displayName: authResult.user_display_name,
+                email: authResult.user_email,
+                nicename: authResult.user_nicename,
+                roles,
+                isAdmin: roles.includes('administrator'),
+                metaResult // Include user meta data in the cookie
+            }), {
+                path: '/',
+                secure: true,
+                sameSite: 'strict',
+                maxAge: 60 * 60 * 24 // 24 hours
+            });
 
-            console.log('Metadata saved successfully');
-
+            //create tribute
             console.log('Creating tribute...');
             // Create tribute
             const slug = generateSlug(data.deceasedFirstName, data.deceasedLastName);
