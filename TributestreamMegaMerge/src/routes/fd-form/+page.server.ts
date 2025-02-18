@@ -124,9 +124,24 @@ export const actions = {
         let token = '';
 
         try {
-            password = generatePassword();
             console.log('Starting form submission process...');
+            
+            // Logout user first to ensure clean state
+            console.log('Logging out any existing user...');
+            const logoutResponse = await fetch('/api/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
 
+            if (!logoutResponse.ok) {
+                console.error('Logout failed:', logoutResponse.statusText);
+                // Continue with form submission even if logout fails
+                console.warn('Proceeding with form submission despite logout failure');
+            } else {
+                console.log('Logout successful');
+            }
+
+            password = generatePassword();
             const formData = await request.formData();
             const data = {
                 directorFirstName: formData.get('director-first-name')?.toString() || '',

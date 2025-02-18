@@ -11,6 +11,8 @@ interface WelcomeEmailData {
   lastName: string;
   email: string;
   password: string;
+  userId: string;
+  token: string;
 }
 
 /**
