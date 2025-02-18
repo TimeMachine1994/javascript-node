@@ -18,279 +18,311 @@ This document details the authentication architecture implemented in our SvelteK
    - Sets consolidated cookie structure with all user data
    - Redirects user based on role (admin/editor/default dashboard)
 
-### Cookie Management
-We use a consolidated two-cookie approach:
-
-1. **JWT Cookie**
-```typescript
-// HTTP-only JWT cookie
-jwt = {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict',
-    path: '/',
-    maxAge: 60 * 60 * 24 // 24 hours
+### Pseudo-code Flow
+```
+// 1. User submits login form
+submitLoginForm(username, password) {
+    // 2. Validate credentials with WordPress
+    response = POST "/wp-json/jwt-auth/v1/token" {
+        username: username,
+        password: password
+    }
+    
+    if (response.ok) {
+        jwt = response.token
+        user_id = response.user_id
+        
+        // 3. Fetch user roles
+        roles = GET "/wp-json/tributestream/v1/user-cap" {
+            headers: { Authorization: `Bearer ${jwt}` }
+        }
+        
+        // 4. Fetch user meta data
+        meta = GET "/api/user-meta?user_id={user_id}" {
+            headers: { Authorization: `Bearer ${jwt}` }
+        }
+        
+        // 5. Set cookies
+        setCookie("jwt", jwt, { httpOnly: true, secure: true })
+        setCookie("user", {
+            displayName: response.user_display_name,
+            email: response.user_email,
+            roles: roles,
+            userMeta: meta,
+            isAdmin: roles.includes("administrator")
+        })
+        
+        // 6. Redirect based on role
+        if (isAdmin) redirect("/admin-dashboard")
+        else if (isEditor) redirect("/editor-dashboard")
+        else redirect("/dashboard")
+    }
 }
 ```
 
-2. **User Data Cookie**
-```typescript
-// Client-accessible user data
-user = {
-    displayName: string,
-    email: string,
-    nicename: string,
+## 2. Cookie Structure
+
+### JWT Cookie (HTTP-only)
+```
+{
+    name: "jwt",
+    value: "encoded.jwt.token",
+    options: {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        path: "/",
+        maxAge: 24 hours
+    }
+}
+```
+
+### User Cookie (Client-accessible)
+```
+{
+    name: "user",
+    value: {
+        displayName: string,
+        email: string,
+        nicename: string,
+        roles: string[],
+        isAdmin: boolean,
+        userMeta: {
+            // User preferences and settings
+            theme: string,
+            notifications: boolean,
+            // Any other meta data from WordPress
+            [key: string]: any
+        }
+    },
+    options: {
+        secure: true,
+        sameSite: "strict",
+        path: "/",
+        maxAge: 24 hours
+    }
+}
+```
+
+## 3. Server-Side Implementation
+
+### Request Handling Flow
+```
+// Server Hook (runs on every request)
+handleRequest(event) {
+    // 1. Extract cookies
+    jwt = getCookie("jwt")
+    userData = parseCookie("user")
+    
+    // 2. Attach to event.locals
+    event.locals = {
+        jwt: jwt,
+        user: {
+            ...userData,
+            isAdmin: userData?.roles?.includes("administrator")
+        }
+    }
+    
+    // 3. Route Protection
+    if (isAdminRoute(event.url)) {
+        if (!jwt) redirect("/login")
+        if (!event.locals.user.isAdmin) redirect("/dashboard")
+    }
+    
+    return handleRequest(event)
+}
+```
+
+### API Endpoints
+
+#### 1. Authentication (`/api/auth`)
+```
+POST /api/auth
+Request:
+{
+    username: string,
+    password: string
+}
+
+Response:
+{
+    token: string,
+    user_display_name: string,
+    user_email: string,
+    user_nicename: string,
+    user_id: string
+}
+```
+
+#### 2. Role Management (`/api/getRole`)
+```
+GET /api/getRole?id={user_id}
+Headers:
+    Authorization: Bearer {jwt}
+
+Response:
+{
     roles: string[],
-    isAdmin: boolean,
-    userMeta: Record<string, any>, // User meta data from WordPress
-    secure: true,
-    sameSite: 'strict',
-    path: '/',
-    maxAge: 60 * 60 * 24
+    capabilities: {
+        [capability: string]: boolean
+    }
 }
 ```
 
-## 2. Server-Side Implementation
+#### 3. User Meta (`/api/user-meta`)
+```
+GET /api/user-meta?user_id={id}
+Headers:
+    Authorization: Bearer {jwt}
 
-### API Proxy Structure
-All WordPress interactions are proxied through SvelteKit server endpoints:
+Response:
+{
+    meta_data: {
+        [key: string]: any
+    }
+}
 
-1. **Authentication Endpoint** (`/api/auth`):
-   - Handles initial authentication
-   - Proxies requests to WordPress JWT endpoint
-   - Fetches additional user data and roles
-   - Returns combined response with:
-     * JWT token
-     * User display name
-     * User email
-     * User nicename
-     * User ID
-     * Roles array
-     * Capabilities object
+POST /api/user-meta
+Headers:
+    Authorization: Bearer {jwt}
+Request:
+{
+    user_id: string,
+    meta_key: string,
+    meta_value: any
+}
+```
 
-2. **Role Management** (`/api/getRole`):
-   - Fetches user roles using user ID
-   - Integrates with custom WordPress plugin
-   - Returns role information and capabilities
+## 4. WordPress Integration
 
-3. **User Metadata** (`/api/user-meta`):
-    - Handles user metadata operations
-    - Supports GET and POST operations
-    - GET: Fetches all meta data for a user
-      ```typescript
-      // GET /api/user-meta?user_id={id}
-      // Response:
-      {
-          meta_data: Record<string, any>
-      }
-      ```
-    - POST: Updates user meta data
-      ```typescript
-      // POST /api/user-meta
-      // Request:
-      {
-          user_id: string,
-          meta_key: string,
-          meta_value: any
-      }
-      ```
-    - Requires JWT authentication
-    - Proxies requests to WordPress user meta endpoints
-    - Used during login flow to fetch user preferences and settings
+### Custom Plugin Endpoints
 
-### Server Hooks Implementation
-Located in `hooks.server.ts`, our server hooks provide:
+#### User Capabilities
+```
+GET /wp-json/tributestream/v1/user-cap
+Headers:
+    Authorization: Bearer {jwt}
 
-1. **Request Interception**:
-   - Reads and validates JWT cookie
-   - Parses user data cookie
-   - Attaches data to `event.locals`
+Response:
+{
+    user_id: number,
+    roles: string[],
+    capabilities: {
+        [capability: string]: boolean
+    }
+}
+```
 
-2. **Route Protection**:
-   - Automatically redirects `/admin` to `/admin-dashboard`
-   - Validates JWT presence for protected routes
-   - Checks role-based access (admin/editor)
-   - Implements redirect logic for unauthorized access
+#### JWT Authentication
+```
+POST /wp-json/jwt-auth/v1/token
+Request:
+{
+    username: string,
+    password: string
+}
 
-3. **Data Access**:
-   ```typescript
-   // Available in event.locals
-   {
-       jwt: string,          // Raw JWT token
-       user: {
-           displayName: string,
-           email: string,
-           nicename: string,
-           roles: string[],
-           isAdmin: boolean,
-           userMeta: Record<string, any> // User meta data from WordPress
-       }
-   }
-   ```
-
-## 3. WordPress Integration
-
-### Custom Plugin Integration
-Our WordPress backend includes custom endpoints:
-
-1. **User Capabilities Endpoint**:
-   - Path: `/wp-json/tributestream/v1/user-cap`
-   - Method: GET
-   - Authentication: Bearer token
-   - Returns:
-     ```typescript
-     {
-         user_id: number,
-         roles: string[],
-         capabilities: Record<string, boolean>
-     }
-     ```
-
-2. **JWT Authentication**:
-   - Path: `/wp-json/jwt-auth/v1/token`
-   - Method: POST
-   - Payload: `{ username: string, password: string }`
-   - Returns:
-     ```typescript
-     {
-         token: string,
-         user_display_name: string,
-         user_email: string,
-         user_nicename: string
-     }
-     ```
-
-### Role-Based Access Control
-We implement multiple user roles with specific capabilities:
-
-1. **Administrator**:
-   - Full access to admin dashboard
-   - Access to all administrative functions
-   - Redirected to `/admin-dashboard`
-
-2. **Editor**:
-   - Access to content management
-   - Limited administrative capabilities
-   - Redirected to `/editor-dashboard`
-
-3. **Default User**:
-   - Basic user privileges
-   - Redirected to `/dashboard`
-
-## 4. Security Measures
-
-### Token Security
-1. **JWT Storage**:
-   - Stored in HTTP-only cookie
-   - Secure flag enabled
-   - Strict same-site policy
-   - 24-hour expiration
-
-2. **User Data Protection**:
-   - Sensitive data in HTTP-only cookies
-   - Non-sensitive data in client-accessible cookie
-   - Role-based information properly segregated
-
-### Request Security
-1. **API Protection**:
-   - All WordPress requests proxied through server
-   - No direct client-to-WordPress communication
-   - Request validation and sanitization
-
-2. **Route Protection**:
-   - Server-side role verification
-   - Protected admin routes
-   - Automatic unauthorized redirects
+Response:
+{
+    token: string,
+    user_display_name: string,
+    user_email: string,
+    user_nicename: string
+}
+```
 
 ## 5. Error Handling
 
 ### Authentication Errors
-1. **Login Failures**:
-   - Invalid credentials handling
-   - Missing field validation
-   - Rate limiting (WordPress level)
+```
+handleAuthError(error) {
+    if (error.type === "invalid_credentials") {
+        return { status: 401, message: "Invalid username or password" }
+    }
+    if (error.type === "token_expired") {
+        clearAuthCookies()
+        redirect("/login")
+    }
+    if (error.type === "meta_fetch_failed") {
+        // Continue with empty meta data
+        return { userMeta: {} }
+    }
+}
+```
 
-2. **Token Errors**:
-   - Invalid token detection
-   - Expired token handling
-   - Malformed token handling
+### Role Verification
+```
+verifyUserRole(user, requiredRole) {
+    if (!user.roles) return false
+    if (requiredRole === "admin" && !user.isAdmin) {
+        redirect("/dashboard")
+        return false
+    }
+    return user.roles.includes(requiredRole)
+}
+```
 
-### Role Verification Errors
-1. **Missing Roles**:
-   - Defaults to empty array
-   - Logs error for monitoring
-   - Maintains user session
+## 6. Security Measures
 
-2. **Invalid Permissions**:
-   - Redirects to appropriate dashboard
-   - Logs unauthorized access attempts
-   - Provides user feedback
+### Token Management
+- JWT stored in HTTP-only cookie
+- User data in separate, client-accessible cookie
+- Secure and SameSite flags enabled
+- 24-hour token expiration
+- All API requests require valid JWT
+- Meta data requests require JWT authentication
 
-## 6. Client-Side Integration
+### Route Protection
+- Server-side role verification
+- Client-side route guards
+- Automatic redirects for unauthorized access
+- Protected admin routes
+- Role-based access control
 
-### SvelteKit Components
-1. **Login Form**:
-   - Form validation
-   - Error message display
-   - Loading state management
+## 7. Data Flow
 
-2. **Protected Routes**:
-   - Role-based component rendering
-   - Automatic redirects
-   - Loading states
+```
+Login Flow:
+User -> Login Form -> WordPress JWT -> User Capabilities -> User Meta -> Cookies -> Redirect
 
-### State Management
-1. **Authentication State**:
-   - Reactive user session management
-   - Role-based UI updates
-   - Error state handling
+Request Flow:
+Request -> Cookie Check -> Role Verification -> Route Protection -> Response
 
-2. **Route Guards**:
-   - Client-side role checking
-   - Protected component mounting
-   - Unauthorized access prevention
-
-## 7. Development Considerations
-
-### Local Development
-1. **Environment Setup**:
-   - WordPress development instance
-   - JWT secret configuration
-   - CORS settings
-
-2. **Testing**:
-   - Authentication flow testing
-   - Role-based access testing
-   - Error scenario testing
-
-### Deployment
-1. **Production Settings**:
-   - Secure cookie configuration
-   - WordPress endpoint configuration
-   - Error logging setup
-
-2. **Monitoring**:
-   - Authentication failure monitoring
-   - Role verification logging
-   - Performance metrics
+Meta Data Flow:
+Request -> JWT Check -> WordPress API -> Meta Data -> User Cookie
+```
 
 ## 8. Future Improvements
 
-1. **Token Refresh**:
-   - Implement refresh token mechanism
-   - Handle token expiration gracefully
-   - Maintain session continuity
+1. Token Refresh Mechanism
+```
+handleTokenRefresh() {
+    if (tokenNearingExpiration) {
+        newToken = refreshToken(currentToken)
+        updateCookies(newToken)
+    }
+}
+```
 
-2. **Enhanced Security**:
-   - Implement rate limiting
-   - Add brute force protection
-   - Enhance audit logging
+2. Real-time Role Updates
+```
+subscribeToRoleUpdates(userId) {
+    onRoleChange(userId, (newRoles) => {
+        updateUserCookie(newRoles)
+        refreshUI()
+    })
+}
+```
 
-3. **User Experience**:
-   - Real-time role updates
-   - Enhanced error messaging
-   - Improved loading states
+3. Enhanced Security
+```
+implementRateLimiting() {
+    trackLoginAttempts()
+    enforceMaxAttempts()
+    implementCooldown()
+}
+```
 
 ## Conclusion
 
-Our authentication architecture provides a secure, maintainable, and scalable solution for WordPress integration with our SvelteKit application. The implementation balances security requirements with user experience, while maintaining clear separation of concerns and following best practices for modern web applications.
+This authentication architecture provides a secure, maintainable, and scalable solution for WordPress integration with our SvelteKit application. The implementation balances security requirements with user experience while maintaining clear separation of concerns and following best practices for modern web applications.
