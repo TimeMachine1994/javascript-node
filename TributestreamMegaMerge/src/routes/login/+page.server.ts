@@ -44,27 +44,18 @@ export const actions: Actions = {
 
             console.log('✅ [Login Action] Extracted user_id:', result.user_id);
 
-            // Step 4: Set JWT token cookie
+            // Step 4: Set JWT token cookie (HTTP-only)
             cookies.set('jwt', result.token, {
                 path: '/',
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: true,
                 sameSite: 'strict',
                 maxAge: 60 * 60 * 24 // 24 hours
             });
 
-            // Step 5: Store user_id in cookies
-            cookies.set('user_id', result.user_id, {
-                path: '/',
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 60 * 60 * 24 // 24 hours
-            });
+            console.log('✅ [Login Action] JWT cookie set');
 
-            console.log('✅ [Login Action] user_id cookie set:', result.user_id);
-
-            // Step 6: Fetch Roles using the user_id
+            // Step 5: Fetch Roles using the user_id
             console.log(`🔄 [Login Action] Fetching roles from /api/getRole?id=${result.user_id}...`);
             const rolesResponse = await fetch(`/api/getRole?id=${result.user_id}`, {
                 method: 'GET',
@@ -79,23 +70,19 @@ export const actions: Actions = {
             roles = Array.isArray(rolesData.roles) ? rolesData.roles : [];
             console.log('✅ [Login Action] Final roles:', roles);
 
-            // Step 7: Set user data with roles
-            cookies.set(
-                'user',
-                JSON.stringify({
-                    displayName: result.user_display_name,
-                    email: result.user_email,
-                    nicename: result.user_nicename,
-                    roles,
-                    isAdmin: roles.includes('administrator')
-                }),
-                {
-                    path: '/',
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: 'strict',
-                    maxAge: 60 * 60 * 24 // 24 hours
-                }
-            );
+            // Step 6: Set user data with roles (client-accessible)
+            cookies.set('user', JSON.stringify({
+                displayName: result.user_display_name,
+                email: result.user_email,
+                nicename: result.user_nicename,
+                roles,
+                isAdmin: roles.includes('administrator')
+            }), {
+                path: '/',
+                secure: true,
+                sameSite: 'strict',
+                maxAge: 60 * 60 * 24 // 24 hours
+            });
 
         } catch (error) {
             console.error('🚨 [Login Action] Error during login:', error);
