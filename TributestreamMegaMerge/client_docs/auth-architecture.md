@@ -1,5 +1,22 @@
 # Authentication Architecture Analysis
-[Previous content remains the same until the Cookie Management section]
+Last Updated: February 18, 2025
+
+## Overview
+
+This document details the authentication architecture implemented in our SvelteKit 5 application, specifically focusing on the integration with WordPress and JWT authentication.
+
+## 1. Authentication Flow
+
+### Login Process
+1. User submits credentials to `/login` route
+2. Server validates form data (username/password)
+3. Server proxies request to WordPress JWT endpoint (`/wp-json/jwt-auth/v1/token`)
+4. Upon success:
+   - Receives JWT token and basic user information
+   - Makes secondary request to custom endpoint (`/wp-json/tributestream/v1/user-cap`) to fetch roles and capabilities
+   - Makes tertiary request to user meta endpoint (`/api/user-meta?user_id={user_id}`) to fetch user meta data
+   - Sets consolidated cookie structure with all user data
+   - Redirects user based on role (admin/editor/default dashboard)
 
 ### Cookie Management
 We use a consolidated two-cookie approach:
@@ -25,24 +42,13 @@ user = {
     nicename: string,
     roles: string[],
     isAdmin: boolean,
-    userMeta: Record<string, any>, // Added user meta data
+    userMeta: Record<string, any>, // User meta data from WordPress
     secure: true,
     sameSite: 'strict',
     path: '/',
     maxAge: 60 * 60 * 24
 }
 ```
-
-### Authentication Flow
-1. User submits credentials to `/login` route
-2. Server validates form data (username/password)
-3. Server proxies request to WordPress JWT endpoint (`/wp-json/jwt-auth/v1/token`)
-4. Upon success:
-   - Receives JWT token and basic user information
-   - Makes secondary request to custom endpoint (`/wp-json/tributestream/v1/user-cap`) to fetch roles and capabilities
-   - Makes tertiary request to user meta endpoint (`/api/user-meta?user_id={user_id}`) to fetch user meta data
-   - Sets consolidated cookie structure with all user data
-   - Redirects user based on role (admin/editor/default dashboard)
 
 ## 2. Server-Side Implementation
 
@@ -53,6 +59,73 @@ All WordPress interactions are proxied through SvelteKit server endpoints:
    - Handles initial authentication
    - Proxies requests to WordPress JWT endpoint
    - Fetches additional user data and roles
+   - Returns combined response with:
+     * JWT token
+     * User display name
+     * User email
+     * User nicename
+     * User ID
+     * Roles array
+     * Capabilities object
+
+2. **Role Management** (`/api/getRole`):
+   - Fetches user roles using user ID
+   - Integrates with custom WordPress plugin
+   - Returns role information and capabilities
+
+3. **User Metadata** (`/api/user-meta`):
+    - Handles user metadata operations
+    - Supports GET and POST operations
+    - GET: Fetches all meta data for a user
+      ```typescript
+      // GET /api/user-meta?user_id={id}
+      // Response:
+      {
+          meta_data: Record<string, any>
+      }
+      ```
+    - POST: Updates user meta data
+      ```typescript
+      // POST /api/user-meta
+      // Request:
+      {
+          user_id: string,
+          meta_key: string,
+          meta_value: any
+      }
+      ```
+    - Requires JWT authentication
+    - Proxies requests to WordPress user meta endpoints
+    - Used during login flow to fetch user preferences and settings
+
+### Server Hooks Implementation
+Located in `hooks.server.ts`, our server hooks provide:
+
+1. **Request Interception**:
+   - Reads and validates JWT cookie
+   - Parses user data cookie
+   - Attaches data to `event.locals`
+
+2. **Route Protection**:
+   - Automatically redirects `/admin` to `/admin-dashboard`
+   - Validates JWT presence for protected routes
+   - Checks role-based access (admin/editor)
+   - Implements redirect logic for unauthorized access
+
+3. **Data Access**:
+   ```typescript
+   // Available in event.locals
+   {
+       jwt: string,          // Raw JWT token
+       user: {
+           displayName: string,
+           email: string,
+           nicename: string,
+           roles: string[],
+           isAdmin: boolean,
+           userMeta: Record<string, any> // User meta data from WordPress
+       }
+   }
    ```
 
 ## 3. WordPress Integration

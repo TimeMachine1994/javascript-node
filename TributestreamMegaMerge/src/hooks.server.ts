@@ -1,6 +1,6 @@
 /**
  * This SvelteKit server hook handles:
- *   1. Reading cookies to retrieve JWT and user info (including roles/capabilities).
+ *   1. Reading cookies to retrieve JWT and user info (including roles/capabilities and meta data).
  *   2. Storing those values in `event.locals` so that server-side endpoints
  *      (or `load` functions) can read them without repeatedly parsing cookies.
  *   3. Applying route guards for admin-related paths by:
@@ -15,11 +15,12 @@
  */
 
 import { redirect } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit';
 
 /**
  * The main handle function that SvelteKit calls for every request.
  */
-export const handle = async ({ event, resolve }) => {
+export const handle: Handle = async ({ event, resolve }) => {
 	console.log('🔄 [Hook] Intercepting Request:', event.url.pathname);
 
 	// ----------------------------------------------------------------
@@ -31,7 +32,7 @@ export const handle = async ({ event, resolve }) => {
 
 	// Retrieve the JWT token from cookies (if it exists)
 	const jwt = event.cookies.get('jwt');
-	// Retrieve the user data cookie, which should contain roles, capabilities, etc. (if we set it after login)
+	// Retrieve the user data cookie, which should contain roles, capabilities, meta data, etc.
 	const userCookie = event.cookies.get('user');
 
 	// ----------------------------------------------------------------
@@ -47,18 +48,17 @@ export const handle = async ({ event, resolve }) => {
 		try {
 			userData = JSON.parse(userCookie);
 
-			/**
-			 * If your client sets 'roles' or 'capabilities' in the user cookie,
-			 * you can also optionally parse them here. For example:
-			 *
-			 *    userData.isAdmin = userData.roles?.includes('administrator');
-			 *
-			 * Then store in event.locals for easy server-side usage:
-			 */
+			// Ensure roles is an array and set isAdmin flag
 			if (Array.isArray(userData.roles)) {
 				userData.isAdmin = userData.roles.includes('administrator');
 			} else {
+				userData.roles = [];
 				userData.isAdmin = false;
+			}
+
+			// Ensure userMeta exists
+			if (!userData.userMeta) {
+				userData.userMeta = {};
 			}
 
 			// Store the entire user object in event.locals
@@ -67,8 +67,8 @@ export const handle = async ({ event, resolve }) => {
 			console.log('👤 [Hook] Parsed user data from cookie:', {
 				displayName: userData.displayName,
 				roles: userData.roles,
-				isAdmin: userData.isAdmin
-				// capabilities: userData.capabilities // if you need them
+				isAdmin: userData.isAdmin,
+				userMeta: userData.userMeta // Log user meta data
 			});
 		} catch (error) {
 			console.error('❌ [Hook] Error parsing user cookie:', error);

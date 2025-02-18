@@ -19,6 +19,7 @@ export const actions: Actions = {
 
         let result;
         let roles: string[] = []; // Fix: Ensure `roles` is defined before using it
+        let userMeta: Record<string, any> = {}; // Initialize user meta data
 
         try {
             console.log('🔄 [Login Action] Sending login request to /api/auth...');
@@ -70,13 +71,32 @@ export const actions: Actions = {
             roles = Array.isArray(rolesData.roles) ? rolesData.roles : [];
             console.log('✅ [Login Action] Final roles:', roles);
 
-            // Step 6: Set user data with roles (client-accessible)
+            // Step 6: Fetch User Meta Data
+            console.log(`🔄 [Login Action] Fetching user meta data from /api/user-meta?user_id=${result.user_id}...`);
+            const metaResponse = await fetch(`/api/user-meta?user_id=${result.user_id}`, {
+                method: 'GET',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${result.token}` // Include JWT token for authentication
+                }
+            });
+
+            if (metaResponse.ok) {
+                const metaData = await metaResponse.json();
+                userMeta = metaData.meta_data || {};
+                console.log('✅ [Login Action] User meta data fetched:', userMeta);
+            } else {
+                console.warn('⚠️ [Login Action] Failed to fetch user meta data. Continuing with empty meta data.');
+            }
+
+            // Step 7: Set user data with roles and meta data (client-accessible)
             cookies.set('user', JSON.stringify({
                 displayName: result.user_display_name,
                 email: result.user_email,
                 nicename: result.user_nicename,
                 roles,
-                isAdmin: roles.includes('administrator')
+                isAdmin: roles.includes('administrator'),
+                userMeta // Include user meta data in the cookie
             }), {
                 path: '/',
                 secure: true,

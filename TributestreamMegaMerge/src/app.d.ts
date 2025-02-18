@@ -3,7 +3,17 @@
 declare global {
 	namespace App {
 		// interface Error {}
-		// interface Locals {}
+		interface Locals {
+			jwt?: string;
+			user?: {
+				displayName: string;
+				email: string;
+				nicename: string;
+				roles: string[];
+				isAdmin: boolean;
+				userMeta: Record<string, any>;
+			};
+		}
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}
