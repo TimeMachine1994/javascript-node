@@ -4,7 +4,8 @@ declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			jwt?: string;
+			jwt_token?: string;
+			user_id?: string;
 			user?: {
 				displayName: string;
 				email: string;
