@@ -56,20 +56,20 @@ export const actions: Actions = {
 
             console.log('✅ [Login Action] JWT cookie set');
 
-            // Step 5: Fetch Roles using the user_id
-            console.log(`🔄 [Login Action] Fetching roles from /api/getRole?id=${result.user_id}...`);
-            const rolesResponse = await fetch(`/api/getRole?id=${result.user_id}`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
+            // // Step 5: Fetch Roles using the user_id
+            // console.log(`🔄 [Login Action] Fetching roles from /api/getRole?id=${result.user_id}...`);
+            // const rolesResponse = await fetch(`/api/getRole?id=${result.user_id}`, {
+            //     method: 'GET',
+            //     headers: { 'Content-Type': 'application/json' }
+            // });
 
-            console.log('🛬 [Login Action] Received response from /api/getRole. Status Code:', rolesResponse.status);
-            const rolesData = await rolesResponse.json();
-            console.log('📝 [Login Action] Parsed roles response:', rolesData);
+            // console.log('🛬 [Login Action] Received response from /api/getRole. Status Code:', rolesResponse.status);
+            // const rolesData = await rolesResponse.json();
+            // console.log('📝 [Login Action] Parsed roles response:', rolesData);
 
-            // Ensure roles is always an array
-            roles = Array.isArray(rolesData.roles) ? rolesData.roles : [];
-            console.log('✅ [Login Action] Final roles:', roles);
+            // // Ensure roles is always an array
+            // roles = Array.isArray(rolesData.roles) ? rolesData.roles : [];
+            // console.log('✅ [Login Action] Final roles:', roles);
 
             // Step 6: Fetch User Meta Data
             console.log(`🔄 [Login Action] Fetching user meta data from /api/user-meta?user_id=${result.user_id}...`);
