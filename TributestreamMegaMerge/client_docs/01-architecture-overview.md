@@ -3,7 +3,7 @@
 ## 1. Introduction
 
 ### Purpose
-This documentation provides a comprehensive overview of the TributeStream platform's architecture, designed to serve as a reference for developers, maintainers, and stakeholders. It covers the current MVP implementation and establishes a foundation for future development.
+This documentation provides a comprehensive overview of the Tributestream platform's architecture, designed to serve as a reference for developers, maintainers, and stakeholders. It covers the current MVP implementation and establishes a foundation for future development.
 
 ### Scope
 - Frontend architecture (SvelteKit 5)
