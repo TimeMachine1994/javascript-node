@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { page } from '$app/stores';
     import type { PageData } from './$types';
     
     interface MetaEntry {
@@ -61,6 +62,38 @@
     
     let { data } = $props<{ data: PageData }>();
     let rawMetaData = $state<MetaEntry[]>([]);
+    let fdFormData = data.userMeta?.memorial_form_data;
+    
+    // Parse and flatten the JSON string
+    let flattenedFormData: any = {};
+    if (fdFormData) {
+        try {
+            const parsedData = JSON.parse(fdFormData);
+
+            // Flattening logic
+            flattenedFormData = {
+                directorFirstName: parsedData.director.firstName,
+                directorLastName: parsedData.director.lastName,
+                familyMemberFirstName: parsedData.familyMember.firstName,
+                familyMemberLastName: parsedData.familyMember.lastName,
+                familyMemberDob: parsedData.familyMember.dob,
+                deceasedFirstName: parsedData.deceased.firstName,
+                deceasedLastName: parsedData.deceased.lastName,
+                deceasedDob: parsedData.deceased.dob,
+                deceasedDop: parsedData.deceased.dop,
+                contactEmail: parsedData.contact.email,
+                contactPhone: parsedData.contact.phone,
+                memorialLocationName: parsedData.memorial.locationName,
+                memorialLocationAddress: parsedData.memorial.locationAddress,
+                memorialTime: parsedData.memorial.time,
+                memorialDate: parsedData.memorial.date
+            };
+
+            console.log('Flattened Form Data:', flattenedFormData);
+        } catch (error) {
+            console.error('Failed to parse and flatten JSON data:', error);
+        }
+    }
     
     $effect(() => {
         console.log('Server data received:', data.scheduleData);
@@ -89,85 +122,109 @@
     });
 </script>
 
-<div class="p-8">
-    <h1 class="text-3xl font-bold mb-8">Scheduled Livestreams</h1>
+<div class="max-w-4xl mx-auto space-y-6">
+    {#each calculatorEntries as entry}
+        <!-- Card: Payment Status and Event Overview -->
+        <div class="bg-white rounded-lg shadow p-6 space-y-4">
+            <!-- Payment Status Bar -->
+            <div class="flex items-center justify-between bg-green-50 border border-green-300 rounded p-3">
+                <div class="flex items-center space-x-2 text-green-700">
+                    <!-- Checkmark icon -->
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M20.285 2.998a1 1 0 0 1 .709 1.707l-11 11a1 1 0 0 1-1.414 0l-5-5a1 1 0 1 1 1.414-1.414l4.293 4.293 10.293-10.293a1 1 0 0 1 1.414 0z"/>
+                    </svg>
+                    <span class="font-semibold">Payment Status: Complete</span>
+                </div>
+            </div>
+            
+            <!-- Main Event Details -->
+            <div class="flex flex-col md:flex-row md:space-x-6">
+                <!-- Text Details -->
+                <div class="md:flex-1 space-y-2 mb-4 md:mb-0">
+                    <!-- Title of the Event -->
+                    <h2 class="text-2xl font-bold text-gray-700">
+                        Celebration of life for {entry.memorialData?.deceased.firstName} {entry.memorialData?.deceased.lastName}
+                    </h2>
 
-    {#if calculatorEntries.length === 0}
-        <p class="text-gray-600">No scheduled livestreams found.</p>
-    {:else}
-        <div class="grid gap-6">
-            {#each calculatorEntries as entry}
-                <div class="bg-white shadow-lg rounded-lg p-6">
-                    <div class="grid grid-cols-2 gap-6">
-                        <!-- Package and Cost -->
-                        <div>
-                            <h2 class="text-xl font-bold mb-4">{entry.selectedPackage} Package</h2>
-                            <p class="text-lg text-gray-700">Total Cost: ${entry.total}</p>
-                            <p class="text-gray-600">Duration: {entry.duration} hours</p>
-                        </div>
-
-                        <!-- Date and Time -->
-                        <div>
-                            <h3 class="font-bold mb-2">Schedule</h3>
-                            <p>Date: {entry.livestreamDate}</p>
-                            <p>Time: {entry.livestreamStartTime}</p>
-                        </div>
-
-                        <!-- Locations -->
-                        <div class="col-span-2">
-                            <h3 class="font-bold mb-2">Locations</h3>
-                            <div class="grid gap-4">
-                                {#each entry.locations as location}
-                                    <div class="bg-gray-50 p-4 rounded">
-                                        <p class="font-semibold">{location.name}</p>
-                                        <p class="text-gray-600">{location.address}</p>
-                                    </div>
-                                {/each}
-                            </div>
-                        </div>
-
-                        <!-- Memorial Information -->
-                        {#if entry.memorialData}
-                            <div class="col-span-2 mt-4">
-                                <h3 class="font-bold mb-2">Memorial Information</h3>
-                                <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded">
-                                    <!-- Deceased Information -->
-                                    <div>
-                                        <p class="font-semibold">Deceased</p>
-                                        <p>{entry.memorialData.deceased.firstName} {entry.memorialData.deceased.lastName}</p>
-                                        <p class="text-gray-600">DOB: {entry.memorialData.deceased.dob}</p>
-                                        <p class="text-gray-600">Date of Passing: {entry.memorialData.deceased.dop}</p>
-                                    </div>
-
-                                    <!-- Contact Information -->
-                                    <div>
-                                        <p class="font-semibold">Contact</p>
-                                        <p>{entry.memorialData.contact.email}</p>
-                                        <p>{entry.memorialData.contact.phone}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        {/if}
-
-                        <!-- Cart Items -->
-                        <div class="col-span-2 mt-4">
-                            <h3 class="font-bold mb-2">Services</h3>
-                            <div class="bg-gray-50 p-4 rounded">
-                                {#each entry.cartItems as item}
-                                    <div class="flex justify-between py-1">
-                                        <span>{item.name}</span>
-                                        <span>${item.price}</span>
-                                    </div>
-                                {/each}
-                                <div class="flex justify-between font-bold pt-2 border-t mt-2">
-                                    <span>Total</span>
-                                    <span>${entry.total}</span>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Starting Location -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">Starting Location</h3>
+                        <p class="text-gray-800">{entry.locations[0]?.name || 'Location TBD'}</p>
+                        <p class="text-gray-800">{entry.locations[0]?.address || ''}</p>
                     </div>
+
+                    <!-- Start Time -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">Start Time</h3>
+                        <p class="text-gray-800">{entry.livestreamDate} @ {entry.livestreamStartTime}</p>
+                    </div>
+
+                    <!-- Notes -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">Notes</h3>
+                        <p class="text-gray-800">Duration: {entry.duration} hours</p>
+                    </div>
+                </div>
+                
+                <!-- Media Placeholder -->
+                <div class="md:w-1/2 h-48 bg-black rounded flex items-center justify-center text-white">
+                    <span class="text-sm">Media Placeholder</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
+            <button class="flex-1 bg-blue-100 text-blue-800 py-2 px-4 rounded shadow text-center font-semibold">
+                Upload Media for Livestream
+            </button>
+            <button class="flex-1 bg-red-100 text-red-800 py-2 px-4 rounded shadow text-center font-semibold">
+                Edit Livestream Schedule
+            </button>
+            <button class="flex-1 bg-pink-100 text-pink-800 py-2 px-4 rounded shadow text-center font-semibold">
+                Transfer Family Point of Contact
+            </button>
+            <button class="flex-1 bg-purple-100 text-purple-800 py-2 px-4 rounded shadow text-center font-semibold">
+                Invite Others to Share Media
+            </button>
+        </div>
+
+        <!-- Current Livestream Schedule Section -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <!-- Header with "Current Livestream Schedule" and "Edit" button -->
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-700">Current Livestream Schedule</h3>
+                <button class="bg-red-100 text-red-800 py-1 px-3 rounded shadow font-semibold">
+                    Edit
+                </button>
+            </div>
+            
+            <!-- Table Headers -->
+            <div class="hidden md:grid grid-cols-4 text-gray-600 font-semibold text-sm border-b border-gray-200 pb-2">
+                <span>Start Time</span>
+                <span>Stream Type</span>
+                <span>Est. Duration</span>
+                <span>Location</span>
+            </div>
+            
+            <!-- Schedule Entries -->
+            {#each entry.locations as location, index}
+                <div class="grid grid-cols-1 md:grid-cols-4 items-center text-gray-800 py-3 border-b border-gray-100">
+                    <span class="font-semibold">
+                        {#if index === 0}
+                            {entry.livestreamStartTime}
+                        {:else}
+                            <!-- Add 1 hour for each subsequent location -->
+                            {new Date(new Date(`2000/01/01 ${entry.livestreamStartTime}`).getTime() + (index * 60 * 60 * 1000)).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        {/if}
+                    </span>
+                    <span>{location.travelExceedsHour ? 'Travel & Service' : 'Service'}</span>
+                    <span>{Math.ceil(entry.duration / entry.locations.length)} Hour</span>
+                    <span>{location.name}, {location.address}</span>
                 </div>
             {/each}
         </div>
-    {/if}
+    {:else}
+        <p class="text-gray-600">No scheduled livestreams found.</p>
+    {/each}
 </div>
