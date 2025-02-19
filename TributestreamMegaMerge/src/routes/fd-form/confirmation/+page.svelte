@@ -2,10 +2,11 @@
      import Calc from '$lib/Calc.svelte';
      import type { PageData } from './$types';
      import { enhance } from '$app/forms';
+     import { goto } from '$app/navigation';
      
      export let data: PageData;
  
-     async function handleCalcSave(orderData: any) {
+     async function handleCalcSave(orderData: any, shouldCheckout: boolean = false) {
          try {
              const formData = new FormData();
              formData.append('calculatorData', JSON.stringify(orderData));
@@ -22,11 +23,19 @@
                  throw new Error(result.message || 'Failed to save calculator data');
              }
  
-             alert('Calculator data saved successfully!');
+             if (shouldCheckout) {
+                 await goto('/schedule/payment_booking');
+             } else {
+                 alert('Calculator data saved successfully!');
+             }
          } catch (error) {
              console.error('Error saving calculator data:', error);
              alert(error instanceof Error ? error.message : 'Failed to save calculator data. Please try again.');
          }
+     }
+ 
+     function handleCheckout(orderData: any) {
+         return handleCalcSave(orderData, true);
      }
  </script>
  
@@ -51,4 +60,5 @@
 <Calc
     initialMemorialData={data.memorialData}
     onSave={handleCalcSave}
+    onCheckout={handleCheckout}
 />

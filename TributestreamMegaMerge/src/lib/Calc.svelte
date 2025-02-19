@@ -44,17 +44,36 @@ interface Location {
     travelExceedsHour: boolean;
 }
 
+import type { PaymentBookingFormData, OrderItem, Location as BookingLocation } from '$lib/types/payment-booking';
+
 interface OrderData {
-    cartItems: CartItem[];
-    total: number;
-    duration: number;
-    livestreamDate: string;
-    livestreamStartTime: string;
-    locations: Location[];
-    selectedPackage: string;
-    funeralHomeName: string;
-    funeralDirectorName: string;
-    memorialData?: MemorialFormData;
+    personalDetails: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        phone: string;
+    };
+    package: {
+        name: string;
+        duration: number;
+        livestreamDate: string;
+        livestreamStartTime: string;
+        locations: BookingLocation[];
+    };
+    orderDetails: {
+        pricing: {
+            items: OrderItem[];
+            subtotal: number;
+            total: number;
+        };
+        package: {
+            name: string;
+            duration: number;
+            livestreamDate: string;
+            livestreamStartTime: string;
+            locations: BookingLocation[];
+        };
+    };
 }
 
 // Props definition using runes
@@ -185,38 +204,59 @@ function removeLocation(index: number): void {
 }
 
 // Save and checkout handlers
-function handleSave(): void {
+function transformToOrderData(): OrderData {
     const calc = cartCalculation();
+    
+    // Transform locations to match BookingLocation type
+    const transformedLocations: BookingLocation[] = locations.map(loc => ({
+        name: loc.name,
+        address: loc.address
+    }));
+
+    // Create the properly structured order data
     const orderData: OrderData = {
-        cartItems: calc.items,
-        total: calc.total,
-        duration,
-        livestreamDate,
-        livestreamStartTime,
-        locations,
-        selectedPackage,
-        funeralHomeName,
-        funeralDirectorName,
-        memorialData: memorialFormData
+        personalDetails: {
+            firstName: memorialFormData?.familyMember.firstName ?? '',
+            lastName: memorialFormData?.familyMember.lastName ?? '',
+            email: memorialFormData?.contact.email ?? '',
+            phone: memorialFormData?.contact.phone ?? ''
+        },
+        package: {
+            name: selectedPackage,
+            duration,
+            livestreamDate,
+            livestreamStartTime,
+            locations: transformedLocations
+        },
+        orderDetails: {
+            pricing: {
+                items: calc.items.map(item => ({
+                    name: item.name,
+                    price: item.price,
+                    type: item.name.toLowerCase().includes('extra') ? 'addon' : 'base'
+                })),
+                subtotal: calc.total,
+                total: calc.total
+            },
+            package: {
+                name: selectedPackage,
+                duration,
+                livestreamDate,
+                livestreamStartTime,
+                locations: transformedLocations
+            }
+        }
     };
-    onSave?.(orderData);
+
+    return orderData;
+}
+
+function handleSave(): void {
+    onSave?.(transformToOrderData());
 }
 
 function handleCheckout(): void {
-    const calc = cartCalculation();
-    const orderData: OrderData = {
-        cartItems: calc.items,
-        total: calc.total,
-        duration,
-        livestreamDate,
-        livestreamStartTime,
-        locations,
-        selectedPackage,
-        funeralHomeName,
-        funeralDirectorName,
-        memorialData: memorialFormData
-    };
-    onCheckout?.(orderData);
+    onCheckout?.(transformToOrderData());
 }
 </script>
 
