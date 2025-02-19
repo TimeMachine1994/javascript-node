@@ -311,9 +311,9 @@ export const actions = {
                 displayName: authResult.user_display_name,
                 email: authResult.user_email,
                 nicename: authResult.user_nicename,
-                roles,
+                roles : authResult.roles,
                 isAdmin: roles.includes('administrator'),
-                metaResult // Include user meta data in the cookie
+                metaResult: metaResult // Include user meta data in the cookie
             }), {
                 path: '/',
                 secure: true,
@@ -321,6 +321,16 @@ export const actions = {
                 maxAge: 60 * 60 * 24 // 24 hours
             });
 
+            console.log('User cookie set:', {
+                            displayName: authResult.user_display_name,
+                            email: authResult.user_email,
+                            nicename: authResult.user_nicename,
+                            roles: authResult.roles,
+                            isAdmin: roles.includes('administrator'),
+                            metaResult: metaResult
+                        });
+            
+            console.log
             //create tribute
             console.log('Creating tribute...');
             // Create tribute
