@@ -1,8 +1,33 @@
  <script lang="ts">
      import Calc from '$lib/Calc.svelte';
      import type { PageData } from './$types';
+     import { enhance } from '$app/forms';
      
      export let data: PageData;
+ 
+     async function handleCalcSave(orderData: any) {
+         try {
+             const formData = new FormData();
+             formData.append('calculatorData', JSON.stringify(orderData));
+             
+             const response = await fetch('?/saveCalculator', {
+                 method: 'POST',
+                 body: formData
+             });
+ 
+             const result = await response.json();
+ 
+             if (!response.ok) {
+                 console.error('Failed to save calculator data:', result);
+                 throw new Error(result.message || 'Failed to save calculator data');
+             }
+ 
+             alert('Calculator data saved successfully!');
+         } catch (error) {
+             console.error('Error saving calculator data:', error);
+             alert(error instanceof Error ? error.message : 'Failed to save calculator data. Please try again.');
+         }
+     }
  </script>
  
   
@@ -23,4 +48,7 @@
     </button>
     <p class="text-lg">To Complete The Reservation Process</p>
 </div>
-<Calc initialMemorialData={data.memorialData} />
+<Calc
+    initialMemorialData={data.memorialData}
+    onSave={handleCalcSave}
+/>
