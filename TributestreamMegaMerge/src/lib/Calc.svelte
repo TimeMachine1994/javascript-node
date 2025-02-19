@@ -1,5 +1,33 @@
 <script lang="ts">
 // Types
+interface MemorialFormData {
+    director: {
+        firstName: string;
+        lastName: string;
+    };
+    familyMember: {
+        firstName: string;
+        lastName: string;
+        dob: string;
+    };
+    deceased: {
+        firstName: string;
+        lastName: string;
+        dob: string;
+        dop: string;
+    };
+    contact: {
+        email: string;
+        phone: string;
+    };
+    memorial: {
+        locationName: string;
+        locationAddress: string;
+        time: string;
+        date: string;
+    };
+}
+
 interface Package {
     name: string;
     price: number;
@@ -26,7 +54,11 @@ interface OrderData {
     selectedPackage: string;
     funeralHomeName: string;
     funeralDirectorName: string;
+    memorialData?: MemorialFormData;
 }
+
+// State variable for memorial form data
+let memorialFormData = $state<MemorialFormData | undefined>(undefined);
 
 // Mock packages data (replace with actual import when available)
 const packages: Package[] = [
@@ -36,15 +68,33 @@ const packages: Package[] = [
 ];
 
 // Props definition using runes
-let { 
+let {
     initialStartTime = '',
     onSave,
-    onCheckout
+    onCheckout,
+    initialMemorialData
 } = $props<{
     initialStartTime?: string,
     onSave?: (data: OrderData) => void,
-    onCheckout?: (data: OrderData) => void
+    onCheckout?: (data: OrderData) => void,
+    initialMemorialData?: MemorialFormData
 }>();
+
+// Initialize memorial data if provided
+$effect(() => {
+    if (initialMemorialData) {
+        memorialFormData = initialMemorialData;
+        funeralDirectorName = `${initialMemorialData.director.firstName} ${initialMemorialData.director.lastName}`;
+        funeralHomeName = initialMemorialData.memorial.locationName;
+        livestreamDate = initialMemorialData.memorial.date;
+        livestreamStartTime = initialMemorialData.memorial.time;
+        locations = [{
+            name: initialMemorialData.memorial.locationName,
+            address: initialMemorialData.memorial.locationAddress,
+            travelExceedsHour: false
+        }];
+    }
+});
 
 // Individual state variables using runes
 let selectedPackage = $state('Solo');
@@ -127,7 +177,8 @@ function handleSave(): void {
         locations,
         selectedPackage,
         funeralHomeName,
-        funeralDirectorName
+        funeralDirectorName,
+        memorialData: memorialFormData
     };
     onSave?.(orderData);
 }
@@ -143,7 +194,8 @@ function handleCheckout(): void {
         locations,
         selectedPackage,
         funeralHomeName,
-        funeralDirectorName
+        funeralDirectorName,
+        memorialData: memorialFormData
     };
     onCheckout?.(orderData);
 }
