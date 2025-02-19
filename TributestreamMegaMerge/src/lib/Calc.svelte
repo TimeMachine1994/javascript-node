@@ -1,6 +1,6 @@
 <script lang="ts">
 // Types
-interface MemorialFormData {
+export interface MemorialFormData {
     director: {
         firstName: string;
         lastName: string;
@@ -57,16 +57,6 @@ interface OrderData {
     memorialData?: MemorialFormData;
 }
 
-// State variable for memorial form data
-let memorialFormData = $state<MemorialFormData | undefined>(undefined);
-
-// Mock packages data (replace with actual import when available)
-const packages: Package[] = [
-    { name: 'Tributestream Solo', price: 550 },
-    { name: 'Tributestream Gold', price: 1100 },
-    { name: 'Tributestream Legacy', price: 2799 }
-];
-
 // Props definition using runes
 let {
     initialStartTime = '',
@@ -80,10 +70,39 @@ let {
     initialMemorialData?: MemorialFormData
 }>();
 
-// Initialize memorial data if provided
+// Mock packages data (replace with actual import when available)
+const packages: Package[] = [
+    { name: 'Tributestream Solo', price: 550 },
+    { name: 'Tributestream Gold', price: 1100 },
+    { name: 'Tributestream Legacy', price: 2799 }
+];
+
+// // State variables using runes
+let memorialFormData = $state<MemorialFormData | undefined>(initialMemorialData);
+// let selectedPackage = $state('Solo');
+// let livestreamDate = $state(initialMemorialData?.memorial.date ?? '');
+// let livestreamStartTime = $state(initialMemorialData?.memorial.time ?? initialStartTime);
+// let duration = $state(2);
+// let locations = $state<Location[]>(
+//     initialMemorialData ? [{
+//         name: initialMemorialData.memorial.locationName,
+//         address: initialMemorialData.memorial.locationAddress,
+//         travelExceedsHour: false
+//     }] : [{ name: '', address: '', travelExceedsHour: false }]
+// );
+// let funeralHomeName = $state(initialMemorialData?.memorial.locationName ?? '');
+// let funeralDirectorName = $state(
+//     initialMemorialData
+//         ? `${initialMemorialData.director.firstName} ${initialMemorialData.director.lastName}`
+//         : ''
+// );
+
+// Update memorial data if it changes
 $effect(() => {
-    if (initialMemorialData) {
+    if (initialMemorialData && initialMemorialData !== memorialFormData) {
         memorialFormData = initialMemorialData;
+        livestreamDate = initialMemorialData.memorial.date;
+        livestreamStartTime = initialMemorialData.memorial.time;
         funeralDirectorName = `${initialMemorialData.director.firstName} ${initialMemorialData.director.lastName}`;
         funeralHomeName = initialMemorialData.memorial.locationName;
         livestreamDate = initialMemorialData.memorial.date;
@@ -385,4 +404,49 @@ function handleCheckout(): void {
             </div>
         </div>
     </div>
+
+    <!-- Memorial Data Display -->
+    {#if memorialFormData}
+        <div class="mt-8 p-6 bg-gray-100 rounded-lg max-w-6xl mx-auto">
+            <h2 class="text-xl font-bold mb-4">Memorial Information</h2>
+            <div class="grid grid-cols-2 gap-6">
+                <!-- Director Information -->
+                <div>
+                    <h3 class="font-bold mb-2">Funeral Director</h3>
+                    <p>Name: {memorialFormData.director.firstName} {memorialFormData.director.lastName}</p>
+                </div>
+
+                <!-- Family Member Information -->
+                <div>
+                    <h3 class="font-bold mb-2">Family Member</h3>
+                    <p>Name: {memorialFormData.familyMember.firstName} {memorialFormData.familyMember.lastName}</p>
+                    <p>Date of Birth: {memorialFormData.familyMember.dob}</p>
+                </div>
+
+                <!-- Deceased Information -->
+                <div>
+                    <h3 class="font-bold mb-2">Deceased</h3>
+                    <p>Name: {memorialFormData.deceased.firstName} {memorialFormData.deceased.lastName}</p>
+                    <p>Date of Birth: {memorialFormData.deceased.dob}</p>
+                    <p>Date of Passing: {memorialFormData.deceased.dop}</p>
+                </div>
+
+                <!-- Contact Information -->
+                <div>
+                    <h3 class="font-bold mb-2">Contact Information</h3>
+                    <p>Email: {memorialFormData.contact.email}</p>
+                    <p>Phone: {memorialFormData.contact.phone}</p>
+                </div>
+
+                <!-- Memorial Information -->
+                <div class="col-span-2">
+                    <h3 class="font-bold mb-2">Memorial Details</h3>
+                    <p>Location: {memorialFormData.memorial.locationName}</p>
+                    <p>Address: {memorialFormData.memorial.locationAddress}</p>
+                    <p>Date: {memorialFormData.memorial.date}</p>
+                    <p>Time: {memorialFormData.memorial.time}</p>
+                </div>
+            </div>
+        </div>
+    {/if}
 </div>
