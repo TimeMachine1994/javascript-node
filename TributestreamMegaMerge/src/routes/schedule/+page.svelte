@@ -1,5 +1,6 @@
 <script lang="ts">
     import { page } from '$app/stores';
+    import { goto } from '$app/navigation';
     import type { PageData } from './$types';
     
     interface MetaEntry {
@@ -175,16 +176,28 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
-            <button class="flex-1 bg-blue-100 text-blue-800 py-2 px-4 rounded shadow text-center font-semibold">
+            <button
+                class="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
+                on:click={() => goto('/schedule/upload_media')}
+            >
                 Upload Media for Livestream
             </button>
-            <button class="flex-1 bg-red-100 text-red-800 py-2 px-4 rounded shadow text-center font-semibold">
+            <button
+                class="flex-1 bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
+                on:click={() => goto('/calc')}
+            >
                 Edit Livestream Schedule
             </button>
-            <button class="flex-1 bg-pink-100 text-pink-800 py-2 px-4 rounded shadow text-center font-semibold">
+            <button
+                class="flex-1 bg-pink-100 hover:bg-pink-200 text-pink-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
+                on:click={() => goto('/schedule/poctransfer')}
+            >
                 Transfer Family Point of Contact
             </button>
-            <button class="flex-1 bg-purple-100 text-purple-800 py-2 px-4 rounded shadow text-center font-semibold">
+            <button
+                class="flex-1 bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
+                on:click={() => goto('/schedule/media_invite')}
+            >
                 Invite Others to Share Media
             </button>
         </div>
@@ -194,7 +207,10 @@
             <!-- Header with "Current Livestream Schedule" and "Edit" button -->
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xl font-bold text-gray-700">Current Livestream Schedule</h3>
-                <button class="bg-red-100 text-red-800 py-1 px-3 rounded shadow font-semibold">
+                <button
+                    class="bg-red-100 text-red-800 py-1 px-3 rounded shadow font-semibold"
+                    on:click={() => goto('/calc')}
+                >
                     Edit
                 </button>
             </div>
