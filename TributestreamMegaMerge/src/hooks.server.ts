@@ -47,7 +47,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (userCookie) {
 		try {
 			userData = JSON.parse(userCookie);
-
+			console.log('👤 [Hook] Parsed user data from cookie:', userData);
 			// Ensure roles is an array and set isAdmin flag
 			if (Array.isArray(userData.roles)) {
 				userData.isAdmin = userData.roles.includes('administrator');
@@ -63,13 +63,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 			// Store the entire user object in event.locals
 			event.locals.user = userData;
-
-			console.log('👤 [Hook] Parsed user data from cookie:', {
-				displayName: userData.displayName,
-				roles: userData.roles,
-				isAdmin: userData.isAdmin,
-				userMeta: userData.userMeta // Log user meta data
-			});
+ 
 		} catch (error) {
 			console.error('❌ [Hook] Error parsing user cookie:', error);
 		}
