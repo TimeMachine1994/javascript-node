@@ -1,190 +1,131 @@
 <script lang="ts">
-  import { page } from '$app/stores';
-  import type { OrderData } from '$lib/types/memorial-calculator';
-  import { onMount } from 'svelte';
+  import type { UserMetadata, ApiError } from '$lib/types/user-metadata';
 
-  interface UserMeta {
-    user_id: string;
-    meta_entries: {
-      [key: string]: string;
-    };
-  }
+  // Props passed from layout
+  let { userData, userError, isLoading } = $props<{
+    userData: UserMetadata | null;
+    userError: ApiError | null;
+    isLoading: boolean;
+  }>();
 
-  // State management using Svelte 5 runes
-  let orderData = $state<OrderData | null>(null);
-  let userData = $state<UserMeta | null>(null);
-  let isLoading = $state(true);
-  let error = $state<string | null>(null);
+  // Computed values for checkout
+  let personalDetails = $derived(userData?.calculator_data?.personalDetails ?? null);
+  let cartItems = $derived(userData?.calculator_data?.cartItems ?? []);
+  let cartTotal = $derived(userData?.calculator_data?.cartTotal ?? 0);
+  let selectedPackage = $derived(userData?.calculator_data?.selectedPackage ?? '');
+  let memorialDetails = $derived(userData?.memorial_form_data?.memorial ?? null);
 
-  // Get order data from navigation state
-  $effect(() => {
-    const state = $page?.state as { orderData?: OrderData };
-    if (state?.orderData) {
-      orderData = state.orderData;
-    }
-  });
-
-  // Fetch user meta data
-  async function fetchUserMeta() {
-    try {
-      const userId = '1'; // TODO: Replace with actual user ID from auth context
-      const response = await fetch(`/api/user-meta?user_id=${userId}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch user meta data');
-      }
-      
-      const data = await response.json();
-      userData = data;
-    } catch (e) {
-      error = e instanceof Error ? e.message : 'An error occurred';
-    } finally {
-      isLoading = false;
-    }
-  }
-
-  onMount(() => {
-    fetchUserMeta();
-  });
-
-  // Derived values using Svelte 5 runes
-  let userFullName = $derived(
-    userData?.meta_entries?.['first_name'] && userData?.meta_entries?.['last_name']
-      ? `${userData.meta_entries['first_name']} ${userData.meta_entries['last_name']}`
-      : 'N/A'
+  // Validation state
+  let hasRequiredData = $derived(
+    !!personalDetails?.firstName &&
+    !!personalDetails?.lastName &&
+    !!personalDetails?.email &&
+    cartItems.length > 0
   );
+
+  // Handle checkout submission
+  async function handleCheckout() {
+    if (!hasRequiredData) {
+      return;
+    }
+    // Checkout logic will be implemented here
+  }
 </script>
 
-<div class="container mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold mb-8">Checkout Summary</h1>
+{#if !userData}
+  <div class="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+    <div class="text-destructive">
+      Please complete the memorial calculator before proceeding to checkout
+    </div>
+    <a 
+      href="/calc" 
+      class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+    >
+      Go to Calculator
+    </a>
+  </div>
+{:else}
+  <div class="max-w-4xl mx-auto p-6 space-y-8">
+    <h1 class="text-3xl font-bold">Checkout</h1>
+    
+    <!-- Personal Information -->
+    <div class="bg-card p-6 rounded-lg shadow-sm">
+      <h2 class="text-xl font-semibold mb-4">Personal Information</h2>
+      {#if personalDetails}
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <span class="font-medium">Name:</span>
+            <span>{personalDetails.firstName} {personalDetails.lastName}</span>
+          </div>
+          <div>
+            <span class="font-medium">Email:</span>
+            <span>{personalDetails.email}</span>
+          </div>
+          <div>
+            <span class="font-medium">Phone:</span>
+            <span>{personalDetails.phone}</span>
+          </div>
+        </div>
+      {:else}
+        <div class="text-destructive">Personal information is incomplete</div>
+      {/if}
+    </div>
 
-  {#if isLoading}
-    <div class="flex items-center justify-center p-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>
-  {:else if error}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">
-      <p>{error}</p>
-    </div>
-  {:else}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <!-- User Information -->
-      <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-4">User Information</h2>
-        <div class="space-y-4">
+    <!-- Memorial Details -->
+    {#if memorialDetails}
+      <div class="bg-card p-6 rounded-lg shadow-sm">
+        <h2 class="text-xl font-semibold mb-4">Memorial Details</h2>
+        <div class="grid grid-cols-2 gap-4">
           <div>
-            <p class="text-sm text-gray-600">Full Name</p>
-            <p class="font-medium">{userFullName}</p>
+            <span class="font-medium">Location:</span>
+            <span>{memorialDetails.location}</span>
           </div>
           <div>
-            <p class="text-sm text-gray-600">Email</p>
-            <p class="font-medium">{userData?.meta_entries?.['email'] ?? 'N/A'}</p>
+            <span class="font-medium">Date:</span>
+            <span>{memorialDetails.date}</span>
           </div>
           <div>
-            <p class="text-sm text-gray-600">Phone</p>
-            <p class="font-medium">{userData?.meta_entries?.['phone'] ?? 'N/A'}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-600">Company</p>
-            <p class="font-medium">{userData?.meta_entries?.['company'] ?? 'N/A'}</p>
+            <span class="font-medium">Time:</span>
+            <span>{memorialDetails.time}</span>
           </div>
         </div>
       </div>
+    {/if}
 
-      <!-- Order Details -->
-      <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold mb-4">Order Details</h2>
+    <!-- Order Summary -->
+    <div class="bg-card p-6 rounded-lg shadow-sm">
+      <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
+      {#if cartItems.length > 0}
         <div class="space-y-4">
-          <div>
-            <p class="text-sm text-gray-600">Package</p>
-            <p class="font-medium">{orderData?.package?.name ?? 'N/A'}</p>
-          </div>
-          
-          <!-- Schedule Days -->
-          <div>
-            <p class="text-sm text-gray-600 mb-2">Schedule</p>
-            {#if orderData?.package?.scheduleDays}
-              {#each orderData.package.scheduleDays as day, dayIndex}
-                <div class="mb-4 p-3 bg-gray-50 rounded">
-                  <p class="font-medium">Day {dayIndex + 1}: {day.date}</p>
-                  
-                  {#each day.locations as location, locationIndex}
-                    <div class="mt-2 pl-4 border-l-2 border-gray-200">
-                      <p class="font-medium">Location {locationIndex + 1}: {location.name}</p>
-                      <p class="text-sm text-gray-600">Address: {location.address}</p>
-                      <p class="text-sm text-gray-600">Time: {location.startTime}</p>
-                      <p class="text-sm text-gray-600">Duration: {location.duration} hours</p>
-                      {#if location.notes}
-                        <p class="text-sm text-gray-600">Notes: {location.notes}</p>
-                      {/if}
-                      {#if location.travelExceedsHour}
-                        <p class="text-sm text-amber-600">Travel time exceeds 1 hour</p>
-                      {/if}
-                    </div>
-                  {/each}
-                </div>
-              {/each}
-            {:else}
-              <p class="text-gray-500">No schedule information available</p>
-            {/if}
-          </div>
-        </div>
-      </div>
-
-      <!-- Pricing Summary -->
-      <div class="bg-white shadow rounded-lg p-6 md:col-span-2">
-        <h2 class="text-xl font-semibold mb-4">Pricing Summary</h2>
-        <div class="space-y-2">
-          {#if orderData?.orderDetails?.pricing?.items}
-            {#each orderData.orderDetails.pricing.items as item}
-              <div class="flex justify-between items-start py-2">
-                <div>
-                  <p class="font-medium">{item.name}</p>
-                  {#if item.description}
-                    <p class="text-sm text-gray-600">{item.description}</p>
-                  {/if}
-                </div>
-                <p class="font-medium">${item.price}</p>
+          <div class="divide-y">
+            {#each cartItems as item}
+              <div class="py-2 flex justify-between">
+                <span>{item.name}</span>
+                <span>${item.price.toFixed(2)}</span>
               </div>
             {/each}
-            <div class="pt-4 border-t border-gray-200">
-              <div class="flex justify-between items-center">
-                <p class="font-semibold">Subtotal</p>
-                <p class="font-semibold">${orderData.orderDetails.pricing.subtotal}</p>
-              </div>
-              <div class="flex justify-between items-center mt-2">
-                <p class="font-semibold text-lg">Total</p>
-                <p class="font-semibold text-lg">${orderData.orderDetails.pricing.total}</p>
-              </div>
+          </div>
+          <div class="pt-4 border-t border-border">
+            <div class="flex justify-between font-bold">
+              <span>Total</span>
+              <span>${cartTotal.toFixed(2)}</span>
             </div>
-          {:else}
-            <p class="text-gray-500">No pricing information available</p>
-          {/if}
+          </div>
         </div>
-      </div>
+      {:else}
+        <div class="text-destructive">No items in cart</div>
+      {/if}
     </div>
 
-    <!-- Action Buttons -->
-    <div class="mt-8 flex justify-end space-x-4">
+    <!-- Checkout Button -->
+    <div class="flex justify-end pt-6">
       <button
-        onclick={() => history.back()}
-        class="px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        class="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={!hasRequiredData}
+        on:click={handleCheckout}
       >
-        Back
-      </button>
-      <button
-        onclick={() => {
-          // TODO: Implement payment processing
-          console.log('Processing payment...');
-        }}
-        class="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-      >
-        Process Payment
+        Proceed to Payment
       </button>
     </div>
-  {/if}
-</div>
-
-<style>
-  /* Add any additional custom styles here */
-</style>
+  </div>
+{/if}
