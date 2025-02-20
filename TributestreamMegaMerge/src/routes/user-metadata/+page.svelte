@@ -5,13 +5,38 @@
     import MemorialDetailsPanel from '$lib/components/memorial/MemorialDetailsPanel.svelte';
     import PricingPanel from '$lib/components/pricing/PricingPanel.svelte';
 
+    // Accessing the data prop
     const { data } = $props<{ data: PageData }>();
 
-    console.log('Raw incoming data:', data);
-    console.log('Memorial form data:', data.userData.memorial_form_data);
-    console.log('Calculator data:', data.userData.calculator_data);
+    // ------------------------------------------------------
+    // 1) Group: Incoming Data
+    // ------------------------------------------------------
+    console.group("INCOMING DATA");
+    console.log("Full data object:", data);
+    console.log("Memorial form data:", data.userData.memorial_form_data);
+    console.log("Calculator data:", data.userData.calculator_data);
+    console.groupEnd();
 
-    // Transform raw metadata into structured format for components
+    // ------------------------------------------------------
+    // 2) Group: Memorial Form Data Details
+    // ------------------------------------------------------
+    console.group("MEMORIAL FORM DATA DETAILS");
+    console.log("Director info:", data.userData.memorial_form_data.director);
+    console.log("Contact info:", data.userData.memorial_form_data.contact);
+    console.log("Deceased info:", data.userData.memorial_form_data.deceased);
+    console.groupEnd();
+
+    // ------------------------------------------------------
+    // 3) Group: Calculator Data Details
+    // ------------------------------------------------------
+    console.group("CALCULATOR DATA DETAILS");
+    console.log("Schedule Days:", data.userData.calculator_data.scheduleDays);
+    console.log("Selected Package:", data.userData.calculator_data.selectedPackage);
+    console.log("Cart Items:", data.userData.calculator_data.cartItems);
+    console.log("Cart Total:", data.userData.calculator_data.cartTotal);
+    console.groupEnd();
+
+    // Transform raw metadata into a structured format for components
     let pageData = $state<UserMetadataPageData>({
         personalInfo: {
             name: `${data.userData.memorial_form_data.director.firstName} ${data.userData.memorial_form_data.director.lastName}`,
@@ -28,12 +53,19 @@
         }
     });
 
-    console.log('Transformed personal info:', pageData.personalInfo);
-    console.log('Transformed memorial details:', pageData.memorialDetails);
-    console.log('Transformed pricing data:', pageData.pricing);
+    // ------------------------------------------------------
+    // 4) Group: Transformed User Metadata
+    // ------------------------------------------------------
+    console.group("TRANSFORMED USER METADATA");
+    console.log("Complete pageData object:", pageData);
+    console.log("Personal Info:", pageData.personalInfo);
+    console.log("Memorial Details:", pageData.memorialDetails);
+    console.log("Pricing Data:", pageData.pricing);
+    console.groupEnd();
 
+    // Effect to log whenever pageData changes
     $effect(() => {
-        console.log('Page data updated:', pageData);
+        console.log("Page data updated:", pageData);
     });
 </script>
 
