@@ -137,3 +137,54 @@
         <div class="space-y-2">
           {#if orderData?.orderDetails?.pricing?.items}
             {#each orderData.orderDetails.pricing.items as item}
+              <div class="flex justify-between items-start py-2">
+                <div>
+                  <p class="font-medium">{item.name}</p>
+                  {#if item.description}
+                    <p class="text-sm text-gray-600">{item.description}</p>
+                  {/if}
+                </div>
+                <p class="font-medium">${item.price}</p>
+              </div>
+            {/each}
+            <div class="pt-4 border-t border-gray-200">
+              <div class="flex justify-between items-center">
+                <p class="font-semibold">Subtotal</p>
+                <p class="font-semibold">${orderData.orderDetails.pricing.subtotal}</p>
+              </div>
+              <div class="flex justify-between items-center mt-2">
+                <p class="font-semibold text-lg">Total</p>
+                <p class="font-semibold text-lg">${orderData.orderDetails.pricing.total}</p>
+              </div>
+            </div>
+          {:else}
+            <p class="text-gray-500">No pricing information available</p>
+          {/if}
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-8 flex justify-end space-x-4">
+      <button
+        onclick={() => history.back()}
+        class="px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+      >
+        Back
+      </button>
+      <button
+        onclick={() => {
+          // TODO: Implement payment processing
+          console.log('Processing payment...');
+        }}
+        class="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+      >
+        Process Payment
+      </button>
+    </div>
+  {/if}
+</div>
+
+<style>
+  /* Add any additional custom styles here */
+</style>
