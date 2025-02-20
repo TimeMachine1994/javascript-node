@@ -7,14 +7,17 @@
     OrderData,
     ScheduleDay
   } from '$lib/types/memorial-calculator';
+  import type { UserMetadata } from '$lib/types/user-metadata';
   import { goto } from '$app/navigation';
 
   // Props
   let { 
+    data,
     initialPackage = "Solo",
     onSave,
     onCheckout 
   } = $props<{
+    data: { userData: UserMetadata[] };
     initialPackage?: string;
     onSave?: (data: OrderData) => void;
     onCheckout?: (data: OrderData) => void;
@@ -41,14 +44,94 @@
     locations: [{ ...DEFAULT_LOCATION }]
   };
 
-  // State
-  let memorialFormData = $state<MemorialFormData | undefined>(undefined);
-  let selectedPackage = $state(initialPackage);
-  let scheduleDays = $state<ScheduleDay[]>([{ ...DEFAULT_SCHEDULE_DAY }]);
+  // Helper functions for parsing location and name data
+  function parseLocationName(location: string): string {
+    return location?.split('-')[0]?.trim() ?? "";
+  }
 
-  // Calculate cart items and total
-  let cartItems = $state<CartItem[]>([]);
-  let cartTotal = $state(0);
+  function parseLocationAddress(location: string): string {
+    return location?.split('-')[1]?.trim() ?? "";
+  }
+
+  function parseFullName(name: string | undefined): { firstName: string, lastName: string } {
+    if (!name) return { firstName: "", lastName: "" };
+    const parts = name.split(' ');
+    return {
+      firstName: parts[0] || "",
+      lastName: parts.slice(1).join(' ') || ""
+    };
+  }
+
+  // Initialize state from userData if available
+  let memorialFormData = $state(data.userData[0]?.memorial_form_data);
+  let selectedPackage = $state(data.userData[0]?.calculator_data?.selectedPackage || initialPackage);
+  
+  // Initialize personal details state
+  let personalDetails = $state({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: ""
+  });
+
+  // Initialize location state
+  let locationName = $state("");
+  let locationAddress = $state("");
+  let locationStartTime = $state("09:00");
+  let memorialDate = $state(new Date().toISOString().split('T')[0]);
+
+  // Initialize schedule days
+  let scheduleDays = $state<ScheduleDay[]>(
+    data.userData[0]?.calculator_data?.scheduleDays?.length > 0
+      ? data.userData[0].calculator_data.scheduleDays
+      : [{ ...DEFAULT_SCHEDULE_DAY }]
+  );
+
+  // Effect to update personal details when memorial data changes
+  $effect(() => {
+    const name = parseFullName(memorialFormData?.familyMember?.name);
+    personalDetails = {
+      firstName: name.firstName,
+      lastName: name.lastName,
+      email: memorialFormData?.contact?.email ?? "",
+      phone: memorialFormData?.contact?.phone ?? ""
+    };
+  });
+
+  // Effect to update location data when memorial data changes
+  $effect(() => {
+    if (memorialFormData?.memorial?.location) {
+      locationName = parseLocationName(memorialFormData.memorial.location);
+      locationAddress = parseLocationAddress(memorialFormData.memorial.location);
+    }
+    
+    if (memorialFormData?.memorial?.time) {
+      locationStartTime = memorialFormData.memorial.time;
+    }
+
+    if (memorialFormData?.memorial?.date) {
+      memorialDate = memorialFormData.memorial.date;
+    }
+
+    // Update initial schedule day with pre-filled data
+    if (scheduleDays[0]) {
+      scheduleDays[0] = {
+        date: memorialDate,
+        locations: [{
+          name: locationName,
+          address: locationAddress,
+          travelExceedsHour: false,
+          startTime: locationStartTime,
+          duration: 2,
+          notes: ""
+        }]
+      };
+    }
+  });
+
+  // Initialize cart from userData if available
+  let cartItems = $state<CartItem[]>(data.userData[0]?.calculator_data?.cartItems || []);
+  let cartTotal = $state(data.userData[0]?.calculator_data?.cartTotal || 0);
 
   $effect(() => {
     const items: CartItem[] = [];
@@ -120,12 +203,7 @@
 
   async function transformToOrderData(): Promise<OrderData> {
     const orderData = {
-      personalDetails: {
-        firstName: memorialFormData?.familyMember.firstName ?? "",
-        lastName: memorialFormData?.familyMember.lastName ?? "",
-        email: memorialFormData?.contact.email ?? "",
-        phone: memorialFormData?.contact.phone ?? ""
-      },
+      personalDetails,
       package: {
         name: selectedPackage,
         scheduleDays
