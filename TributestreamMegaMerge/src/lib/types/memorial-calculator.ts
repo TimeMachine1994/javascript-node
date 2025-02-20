@@ -21,6 +21,20 @@ export interface Contact {
   phone: string;
 }
 
+export interface Location {
+  name: string;
+  address: string;
+  travelExceedsHour: boolean;
+  startTime: string;
+  duration: number; // in hours
+  notes: string;
+}
+
+export interface ScheduleDay {
+  date: string;
+  locations: Location[];
+}
+
 export interface Memorial {
   locationName: string;
   locationAddress: string;
@@ -41,15 +55,10 @@ export interface Package {
   price: number;
 }
 
-export interface Location {
-  name: string;
-  address: string;
-  travelExceedsHour: boolean;
-}
-
 export interface CartItem {
   name: string;
   price: number;
+  description?: string;
 }
 
 export interface OrderData {
@@ -61,10 +70,7 @@ export interface OrderData {
   };
   package: {
     name: string;
-    duration: number;
-    livestreamDate: string;
-    livestreamStartTime: string;
-    locations: Location[];
+    scheduleDays: ScheduleDay[];
   };
   orderDetails: {
     pricing: {
@@ -74,10 +80,7 @@ export interface OrderData {
     };
     package: {
       name: string;
-      duration: number;
-      livestreamDate: string;
-      livestreamStartTime: string;
-      locations: Location[];
+      scheduleDays: ScheduleDay[];
     };
   };
 }
