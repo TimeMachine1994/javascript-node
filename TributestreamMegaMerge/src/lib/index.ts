@@ -1,1 +1,5 @@
-// place files you want to import through the `$lib` alias in this folder.
+// Export components
+export { default as MemorialCalculator } from './components/MemorialCalculator.svelte';
+
+// Export types
+export type * from './types/memorial-calculator';

@@ -1,143 +1,325 @@
-# Implementation Plan: FD Form to Payment Booking Integration
+# Memorial Calculator Component Implementation Plan
 
-## Overview
-Implement navigation from FD form confirmation page to payment booking route with data persistence and pre-population.
+## Data Structures
 
-## Current Architecture
-1. FD Form Confirmation Page (`/fd-form/confirmation/+page.svelte`)
-   - Contains calculator component (`Calc.svelte`)
-   - Saves calculator data to user metadata with key 'calculator_data'
-   - Currently has no direct navigation to payment booking
+### TypeScript Interfaces
 
-2. Calculator Component (`Calc.svelte`)
-   - Manages order data structure:
-     ```typescript
-     interface OrderData {
-         cartItems: CartItem[];
-         total: number;
-         duration: number;
-         livestreamDate: string;
-         livestreamStartTime: string;
-         locations: Location[];
-         selectedPackage: string;
-         funeralHomeName: string;
-         funeralDirectorName: string;
-         memorialData?: MemorialFormData;
-     }
-     ```
-
-3. Payment Booking Form (`/schedule/payment_booking/+page.svelte`)
-   - Expects flattened data structure:
-     ```typescript
-     interface FormData {
-         firstName: string;
-         lastName: string;
-         email: string;
-         phone: string;
-         billingAddress: Address;
-         shippingAddress: Address;
-         cardDetails: CardDetails;
-     }
-     ```
-
-## Implementation Steps
-
-### 1. Update Calculator Save Handler
 ```typescript
-async function handleCalcSave(orderData: OrderData) {
-    try {
-        // Save calculator data as before
-        const formData = new FormData();
-        formData.append('calculatorData', JSON.stringify(orderData));
-        
-        const response = await fetch('?/saveCalculator', {
-            method: 'POST',
-            body: formData
-        });
+interface Director {
+  firstName: string;
+  lastName: string;
+}
 
-        if (!response.ok) {
-            throw new Error('Failed to save calculator data');
-        }
+interface FamilyMember {
+  firstName: string;
+  lastName: string;
+  dob: string;
+}
 
-        // Navigate to payment booking on success
-        goto('/schedule/payment_booking');
-    } catch (error) {
-        console.error('Error:', error);
-        alert(error instanceof Error ? error.message : 'An error occurred');
-    }
+interface Deceased {
+  firstName: string;
+  lastName: string;
+  dob: string;
+  dop: string;
+}
+
+interface Contact {
+  email: string;
+  phone: string;
+}
+
+interface Memorial {
+  locationName: string;
+  locationAddress: string;
+  time: string;
+  date: string;
+}
+
+interface MemorialFormData {
+  director: Director;
+  familyMember: FamilyMember;
+  deceased: Deceased;
+  contact: Contact;
+  memorial: Memorial;
+}
+
+interface Package {
+  name: string;
+  price: number;
+}
+
+interface Location {
+  name: string;
+  address: string;
+  travelExceedsHour: boolean;
+}
+
+interface CartItem {
+  name: string;
+  price: number;
 }
 ```
 
-### 2. Data Integration in Payment Booking Page
-1. Load and combine data:
-   ```typescript
-   async function loadCombinedData() {
-       const memorialData = await loadMemorialData();
-       const calculatorData = await loadCalculatorData();
-       return mergeAndFlattenData(memorialData, calculatorData);
-   }
-   ```
+## Component Structure
 
-2. Data transformation function:
-   ```typescript
-   function mergeAndFlattenData(memorialData, calculatorData) {
-       return {
-           firstName: memorialData.familyMember.firstName,
-           lastName: memorialData.familyMember.lastName,
-           email: memorialData.contact.email,
-           phone: memorialData.contact.phone,
-           billingAddress: {
-               street: memorialData.memorial.locationAddress,
-               city: '',  // To be filled by user
-               state: '', // To be filled by user
-               zip: '',   // To be filled by user
-               country: 'USA'
-           },
-           shippingAddress: {}, // Same as billing by default
-           orderDetails: {
-               package: calculatorData.selectedPackage,
-               total: calculatorData.total,
-               items: calculatorData.cartItems
-           }
-       };
-   }
-   ```
+### State Management (Using Runes)
+```typescript
+// Props
+let { 
+  initialPackage = "Solo",
+  initialDuration = 2,
+  onSave,
+  onCheckout 
+} = $props<{
+  initialPackage?: string;
+  initialDuration?: number;
+  onSave?: (data: OrderData) => void;
+  onCheckout?: (data: OrderData) => void;
+}>();
 
-### 3. Update Payment Booking Form
-1. Add data loading in page load function:
-   ```typescript
-   export async function load({ cookies }) {
-       const combinedData = await loadCombinedData();
-       return {
-           formData: combinedData
-       };
-   }
-   ```
+// State
+let memorialFormData = $state<MemorialFormData | undefined>(undefined);
+let selectedPackage = $state(initialPackage);
+let livestreamDate = $state("");
+let livestreamStartTime = $state("");
+let duration = $state(initialDuration);
+let locations = $state<Location[]>([{
+  name: "",
+  address: "",
+  travelExceedsHour: false
+}]);
+let funeralHomeName = $state("");
+let funeralDirectorName = $state("");
 
-2. Pre-populate form fields:
-   ```typescript
-   <script>
-       export let data;
-       let formData = data.formData;
-   </script>
-   ```
+// Constants
+const PACKAGES: Package[] = [
+  { name: "Tributestream Solo", price: 550 },
+  { name: "Tributestream Gold", price: 1100 },
+  { name: "Tributestream Legacy", price: 2799 }
+];
+```
 
-## Testing Plan
-1. Test calculator data persistence
-2. Verify navigation to payment booking
-3. Confirm data pre-population
-4. Test form submission with combined data
-5. Verify error handling
+### Derived Values
+```typescript
+// Using $derived rune
+let locationNumDefault = $derived(
+  selectedPackage === "Solo" || selectedPackage === "Legacy" ? 1 : 2
+);
 
-## Security Considerations
-1. Validate data integrity during transfer
-2. Ensure proper user authentication
-3. Sanitize data before display
-4. Protect sensitive payment information
+let cart = $derived(() => {
+  const items: CartItem[] = [];
+  let total = 0;
 
-## Rollout Strategy
-1. Implement changes in development environment
-2. Conduct thorough testing
-3. Deploy to staging for validation
-4. Monitor initial production deployment
-5. Plan for rollback if needed
+  // Add package price
+  const packageItem = PACKAGES.find(p => p.name.includes(selectedPackage));
+  if (packageItem) {
+    items.push(packageItem);
+    total += packageItem.price;
+  }
+
+  // Calculate extra hours
+  const extraHours = Math.max(0, duration - 2);
+  if (extraHours > 0) {
+    items.push({
+      name: "Extra Duration",
+      price: extraHours * 125
+    });
+    total += extraHours * 125;
+  }
+
+  // Calculate additional locations
+  locations.slice(1).forEach(() => {
+    items.push({
+      name: "Additional Location",
+      price: 349
+    });
+    total += 349;
+  });
+
+  return { items, total };
+});
+```
+
+### Helper Functions
+```typescript
+function addLocation() {
+  if (locations.length < locationNumDefault) {
+    locations = [...locations, {
+      name: "",
+      address: "",
+      travelExceedsHour: false
+    }];
+  }
+}
+
+function removeLocation(index: number) {
+  locations = locations.filter((_, i) => i !== index);
+}
+
+function transformToOrderData(): OrderData {
+  return {
+    personalDetails: {
+      firstName: memorialFormData?.familyMember.firstName ?? "",
+      lastName: memorialFormData?.familyMember.lastName ?? "",
+      email: memorialFormData?.contact.email ?? "",
+      phone: memorialFormData?.contact.phone ?? ""
+    },
+    package: {
+      name: selectedPackage,
+      duration,
+      livestreamDate,
+      livestreamStartTime,
+      locations: locations.map(loc => ({
+        name: loc.name,
+        address: loc.address,
+        travelExceedsHour: loc.travelExceedsHour
+      }))
+    },
+    orderDetails: {
+      pricing: {
+        items: cart.items,
+        subtotal: cart.total,
+        total: cart.total
+      },
+      package: {
+        name: selectedPackage,
+        duration,
+        livestreamDate,
+        livestreamStartTime,
+        locations: locations
+      }
+    }
+  };
+}
+```
+
+## Component Template Structure
+
+```svelte
+<div class="memorial-calculator">
+  <!-- Package Selection -->
+  <div class="package-selection">
+    {#each PACKAGES as pkg}
+      <button 
+        class:selected={selectedPackage === pkg.name}
+        on:click={() => selectedPackage = pkg.name}
+      >
+        {pkg.name} - ${pkg.price}
+      </button>
+    {/each}
+  </div>
+
+  <!-- Duration Selection -->
+  <div class="duration-selection">
+    <label>
+      Duration (hours):
+      <input 
+        type="number" 
+        min="2"
+        bind:value={duration}
+      />
+    </label>
+  </div>
+
+  <!-- Locations -->
+  <div class="locations">
+    {#each locations as location, i}
+      <div class="location">
+        <input 
+          type="text"
+          placeholder="Location Name"
+          bind:value={location.name}
+        />
+        <input 
+          type="text"
+          placeholder="Address"
+          bind:value={location.address}
+        />
+        <label>
+          <input 
+            type="checkbox"
+            bind:checked={location.travelExceedsHour}
+          />
+          Travel exceeds 1 hour
+        </label>
+        {#if i > 0}
+          <button on:click={() => removeLocation(i)}>
+            Remove Location
+          </button>
+        {/if}
+      </div>
+    {/each}
+    {#if locations.length < locationNumDefault}
+      <button on:click={addLocation}>
+        Add Location
+      </button>
+    {/if}
+  </div>
+
+  <!-- Cart Summary -->
+  <div class="cart-summary">
+    <h3>Order Summary</h3>
+    {#each cart.items as item}
+      <div class="cart-item">
+        <span>{item.name}</span>
+        <span>${item.price}</span>
+      </div>
+    {/each}
+    <div class="cart-total">
+      Total: ${cart.total}
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="actions">
+    <button on:click={() => onSave?.(transformToOrderData())}>
+      Save
+    </button>
+    <button on:click={() => onCheckout?.(transformToOrderData())}>
+      Checkout
+    </button>
+  </div>
+</div>
+```
+
+## Implementation Steps
+
+1. Create the component file at `src/lib/components/MemorialCalculator.svelte`
+2. Create a types file at `src/lib/types/memorial-calculator.ts`
+3. Implement the component following the structure above
+4. Add proper TypeScript types and validation
+5. Add error handling for edge cases
+6. Add proper styling using Tailwind CSS
+7. Add documentation for component usage
+8. Add unit tests for business logic
+
+## Usage Example
+
+```svelte
+<script lang="ts">
+import MemorialCalculator from '$lib/components/MemorialCalculator.svelte';
+
+function handleSave(data: OrderData) {
+  console.log('Saving:', data);
+}
+
+function handleCheckout(data: OrderData) {
+  console.log('Proceeding to checkout:', data);
+}
+</script>
+
+<MemorialCalculator
+  initialPackage="Solo"
+  initialDuration={2}
+  {onSave}
+  {onCheckout}
+/>
+```
+
+## Next Steps
+
+1. Switch to Code mode to implement the component
+2. Create necessary type definitions
+3. Implement the component following this plan
+4. Add proper styling and documentation
+5. Test the component functionality
