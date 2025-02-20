@@ -1,6 +1,7 @@
+import type { ScheduleDay } from './api';
+
 /**
  * Type definitions for payment booking form data
- * Consolidates data from calculator and memorial form cookies
  */
 
 /**
@@ -9,17 +10,19 @@
 export interface Location {
     name: string;
     address: string;
+    startTime: string;
+    duration: number;
+    travelExceedsHour: boolean;
+    notes?: string;
 }
 
 /**
- * Represents package details including livestream information
+ * Represents package details
  */
 export interface PackageDetails {
     name: string;
-    duration: number;
-    livestreamDate: string;
-    livestreamStartTime: string;
-    locations: Location[];
+    scheduleDays: ScheduleDay[];
+    price: number;
 }
 
 /**
@@ -28,7 +31,7 @@ export interface PackageDetails {
 export interface OrderItem {
     name: string;
     price: number;
-    type?: 'base' | 'addon';
+    description?: string;
 }
 
 /**
@@ -48,6 +51,8 @@ export interface PersonalDetails {
     lastName: string;
     email: string;
     phone: string;
+    relationship?: string;
+    otherRelationship?: string;
 }
 
 /**
@@ -72,10 +77,9 @@ export interface CardDetails {
 
 /**
  * Main type definition for the payment booking form
- * Consolidates all necessary data for rendering the payment booking page
  */
 export interface PaymentBookingFormData {
-    // Personal information from memorial form
+    // Personal information
     personalDetails: PersonalDetails;
     
     // Package information from calculator
@@ -101,10 +105,7 @@ export interface PaymentBookingFormData {
 export interface CalculatorCookieData {
     cartItems: OrderItem[];
     total: number;
-    duration: number;
-    livestreamDate: string;
-    livestreamStartTime: string;
-    locations: Location[];
+    scheduleDays: ScheduleDay[];
     selectedPackage: string;
     funeralHomeName: string;
     funeralDirectorName: string;
@@ -119,17 +120,20 @@ export interface MemorialFormCookieData {
         lastName: string;
     };
     familyMember: {
-        name: string;
+        firstName: string;
+        lastName: string;
         dob: string;
     };
     deceased: {
-        name: string;
+        firstName: string;
+        lastName: string;
         dob: string;
         dateOfPassing: string;
     };
     contact: {
         email: string;
         phone: string;
+        relationship?: string;
     };
     memorial: {
         location: string;

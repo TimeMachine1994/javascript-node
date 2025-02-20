@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { BuyerInformationProps } from '$lib/types/checkout';
+    import { validationRules } from '$lib/types/checkout';
     
     // Props using runes with type inference
     let props = $props();
@@ -7,11 +8,28 @@
     let onUpdate = props.onUpdate as BuyerInformationProps['onUpdate'];
     let errors = props.errors as BuyerInformationProps['errors'];
 
+    // Relationship options
+    const relationshipOptions = [
+        'Family Member',
+        'Friend',
+        'Funeral Director',
+        'Other'
+    ];
+
     // Local state
-    let formData = $state({ ...initialData });
+    let formData = $state({
+        ...initialData,
+        relationship: initialData.relationship || ''
+    });
+
+    let showOtherRelationship = $derived(formData.relationship === 'Other');
 
     // Handle input changes
     function handleChange() {
+        // Reset relationship-specific fields when relationship changes
+        if (formData.relationship !== 'Other') {
+            formData.otherRelationship = '';
+        }
         onUpdate(formData);
     }
 
@@ -24,171 +42,146 @@
     function hasError(field: string): boolean {
         return !!errors[field];
     }
+
+    // Format phone number as user types
+    function formatPhoneNumber(value: string): string {
+        // Remove all non-numeric characters
+        const cleaned = value.replace(/\D/g, '');
+        
+        // Format the number
+        if (cleaned.length === 0) return '';
+        if (cleaned.length <= 3) return cleaned;
+        if (cleaned.length <= 6) return `(${cleaned.slice(0,3)}) ${cleaned.slice(3)}`;
+        return `(${cleaned.slice(0,3)}) ${cleaned.slice(3,6)}-${cleaned.slice(6,10)}`;
+    }
+
+    function handlePhoneInput(event: Event) {
+        const input = event.target as HTMLInputElement;
+        const formatted = formatPhoneNumber(input.value);
+        formData.phone = formatted;
+        handleChange();
+    }
 </script>
 
-<div class="buyer-information">
-    <h2>Personal Information</h2>
-    <p class="subtitle">Please verify or update your contact information</p>
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <h2 class="text-2xl font-semibold text-gray-900 mb-2">Personal Information</h2>
+    <p class="text-gray-600 text-sm mb-6">Please verify or update your contact information</p>
 
-    <form class="form" on:submit|preventDefault={handleChange}>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="firstName" class="label">
-                    First Name <span class="required">*</span>
+    <form class="space-y-6" on:submit|preventDefault={handleChange}>
+        <!-- Name Fields -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="firstName" class="block text-sm font-medium text-gray-700">
+                    First Name <span class="text-red-500">*</span>
                 </label>
                 <input
                     type="text"
                     id="firstName"
-                    class="input"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {hasError('firstName') ? 'border-red-300' : ''}"
                     class:error={hasError('firstName')}
                     bind:value={formData.firstName}
                     on:input={handleChange}
                     placeholder="Enter your first name"
                 />
                 {#if hasError('firstName')}
-                    <span class="error-message">{getError('firstName')}</span>
+                    <p class="mt-1 text-sm text-red-600">{getError('firstName')}</p>
                 {/if}
             </div>
 
-            <div class="form-group">
-                <label for="lastName" class="label">
-                    Last Name <span class="required">*</span>
+            <div>
+                <label for="lastName" class="block text-sm font-medium text-gray-700">
+                    Last Name <span class="text-red-500">*</span>
                 </label>
                 <input
                     type="text"
                     id="lastName"
-                    class="input"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {hasError('lastName') ? 'border-red-300' : ''}"
                     class:error={hasError('lastName')}
                     bind:value={formData.lastName}
                     on:input={handleChange}
                     placeholder="Enter your last name"
                 />
                 {#if hasError('lastName')}
-                    <span class="error-message">{getError('lastName')}</span>
+                    <p class="mt-1 text-sm text-red-600">{getError('lastName')}</p>
                 {/if}
             </div>
         </div>
 
-        <div class="form-group">
-            <label for="email" class="label">
-                Email Address <span class="required">*</span>
+        <!-- Contact Fields -->
+        <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">
+                Email Address <span class="text-red-500">*</span>
             </label>
             <input
                 type="email"
                 id="email"
-                class="input"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {hasError('email') ? 'border-red-300' : ''}"
                 class:error={hasError('email')}
                 bind:value={formData.email}
                 on:input={handleChange}
                 placeholder="Enter your email address"
             />
             {#if hasError('email')}
-                <span class="error-message">{getError('email')}</span>
+                <p class="mt-1 text-sm text-red-600">{getError('email')}</p>
             {/if}
         </div>
 
-        <div class="form-group">
-            <label for="phone" class="label">
-                Phone Number <span class="required">*</span>
+        <div>
+            <label for="phone" class="block text-sm font-medium text-gray-700">
+                Phone Number <span class="text-red-500">*</span>
             </label>
             <input
                 type="tel"
                 id="phone"
-                class="input"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {hasError('phone') ? 'border-red-300' : ''}"
                 class:error={hasError('phone')}
                 bind:value={formData.phone}
-                on:input={handleChange}
-                placeholder="Enter your phone number"
+                on:input={handlePhoneInput}
+                placeholder="(555) 555-5555"
             />
             {#if hasError('phone')}
-                <span class="error-message">{getError('phone')}</span>
+                <p class="mt-1 text-sm text-red-600">{getError('phone')}</p>
             {/if}
-            <span class="help-text">Format: +1 (555) 555-5555</span>
         </div>
+
+        <!-- Relationship Fields -->
+        <div>
+            <label for="relationship" class="block text-sm font-medium text-gray-700">
+                Relationship to Deceased <span class="text-red-500">*</span>
+            </label>
+            <select
+                id="relationship"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {hasError('relationship') ? 'border-red-300' : ''}"
+                bind:value={formData.relationship}
+                on:change={handleChange}
+            >
+                <option value="">Select relationship</option>
+                {#each relationshipOptions as option}
+                    <option value={option}>{option}</option>
+                {/each}
+            </select>
+            {#if hasError('relationship')}
+                <p class="mt-1 text-sm text-red-600">{getError('relationship')}</p>
+            {/if}
+        </div>
+
+        {#if showOtherRelationship}
+            <div>
+                <label for="otherRelationship" class="block text-sm font-medium text-gray-700">
+                    Please Specify Relationship <span class="text-red-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    id="otherRelationship"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {hasError('otherRelationship') ? 'border-red-300' : ''}"
+                    bind:value={formData.otherRelationship}
+                    on:input={handleChange}
+                    placeholder="Please specify your relationship"
+                />
+                {#if hasError('otherRelationship')}
+                    <p class="mt-1 text-sm text-red-600">{getError('otherRelationship')}</p>
+                {/if}
+            </div>
+        {/if}
     </form>
 </div>
-
-<style>
-    .buyer-information {
-        color: #1e293b;
-    }
-
-    h2 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #0f172a;
-    }
-
-    .subtitle {
-        color: #64748b;
-        margin-bottom: 2rem;
-        font-size: 0.875rem;
-    }
-
-    .form {
-        display: grid;
-        gap: 1.5rem;
-    }
-
-    .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-    }
-
-    .form-group {
-        display: grid;
-        gap: 0.5rem;
-    }
-
-    .label {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #334155;
-    }
-
-    .required {
-        color: #ef4444;
-    }
-
-    .input {
-        width: 100%;
-        padding: 0.625rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.375rem;
-        font-size: 0.875rem;
-        color: #1e293b;
-        transition: all 0.2s;
-    }
-
-    .input:focus {
-        outline: none;
-        border-color: #4f46e5;
-        box-shadow: 0 0 0 1px #4f46e5;
-    }
-
-    .input.error {
-        border-color: #ef4444;
-    }
-
-    .input.error:focus {
-        box-shadow: 0 0 0 1px #ef4444;
-    }
-
-    .error-message {
-        font-size: 0.75rem;
-        color: #ef4444;
-    }
-
-    .help-text {
-        font-size: 0.75rem;
-        color: #64748b;
-    }
-
-    @media (max-width: 640px) {
-        .form-row {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>

@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { OrderSummaryProps } from '$lib/types/checkout';
+    import type { ScheduleDay } from '$lib/types/memorial-calculator';
     
     // Props
     export let pricing: OrderSummaryProps['pricing'];
@@ -25,194 +26,111 @@
 
     // Format time
     const formatTime = (timeStr: string) => {
-        const [hours, minutes] = timeStr.split(':');
-        const date = new Date();
-        date.setHours(parseInt(hours), parseInt(minutes));
-        return date.toLocaleTimeString('en-US', {
+        return new Date(`1970-01-01T${timeStr}`).toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
             hour12: true
         });
     };
+
+    // Calculate duration display
+    const getDurationDisplay = (duration: number) => {
+        if (duration === 1) return '1 hour';
+        return `${duration} hours`;
+    };
+
+    // Group items by type for display
+    const groupedItems = pricing.items.reduce((acc, item) => {
+        const type = item.description || 'Base Package';
+        if (!acc[type]) acc[type] = [];
+        acc[type].push(item);
+        return acc;
+    }, {} as Record<string, typeof pricing.items>);
 </script>
 
-<div class="order-summary">
-    <h2>Order Summary</h2>
+<div class="order-summary bg-white rounded-lg shadow-sm p-6">
+    <h2 class="text-2xl font-semibold text-gray-900 mb-6">Order Summary</h2>
 
     <!-- Package Details -->
-    <div class="section">
-        <h3>Package Details</h3>
-        <div class="details">
-            <div class="detail-row">
-                <span>Package</span>
-                <span>{packageDetails.name}</span>
-            </div>
-            <div class="detail-row">
-                <span>Duration</span>
-                <span>{packageDetails.duration} hours</span>
-            </div>
-            <div class="detail-row">
-                <span>Date</span>
-                <span>{formatDate(packageDetails.livestreamDate)}</span>
-            </div>
-            <div class="detail-row">
-                <span>Time</span>
-                <span>{formatTime(packageDetails.livestreamStartTime)}</span>
+    <div class="mb-8 pb-6 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Package Details</h3>
+        <div class="bg-gray-50 rounded-lg p-4">
+            <div class="grid gap-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Selected Package</span>
+                    <span class="font-medium text-gray-900">{packageDetails.name}</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Service Locations -->
-    <div class="section">
-        <h3>Service Locations</h3>
-        {#each packageDetails.locations as location}
-            <div class="location">
-                <h4>{location.name}</h4>
-                <p>{location.address}</p>
+    <!-- Schedule Details -->
+    <div class="mb-8 pb-6 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Service Schedule</h3>
+        {#each packageDetails.scheduleDays as day}
+            <div class="mb-4 last:mb-0">
+                <div class="font-medium text-gray-900 mb-2">
+                    {formatDate(day.date)}
+                </div>
+                <div class="space-y-3">
+                    {#each day.locations as location}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="grid gap-2">
+                                <div class="font-medium text-gray-900">{location.name}</div>
+                                <div class="text-sm text-gray-600">{location.address}</div>
+                                <div class="flex justify-between text-sm text-gray-600">
+                                    <span>Start Time: {formatTime(location.startTime)}</span>
+                                    <span>Duration: {getDurationDisplay(location.duration)}</span>
+                                </div>
+                                {#if location.travelExceedsHour}
+                                    <div class="mt-2 text-amber-600 text-sm">
+                                        Note: Travel time exceeds 1 hour
+                                    </div>
+                                {/if}
+                                {#if location.notes}
+                                    <div class="mt-2 text-gray-600 text-sm">
+                                        Notes: {location.notes}
+                                    </div>
+                                {/if}
+                            </div>
+                        </div>
+                    {/each}
+                </div>
             </div>
         {/each}
     </div>
 
-    <!-- Pricing Details -->
-    <div class="section">
-        <h3>Price Breakdown</h3>
-        <div class="pricing">
-            {#each pricing.items as item}
-                <div class="price-row">
-                    <span class="item-name">{item.name}</span>
-                    <span class="item-type">{item.type || 'service'}</span>
-                    <span class="item-price">{formatCurrency(item.price)}</span>
+    <!-- Price Breakdown -->
+    <div>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Price Breakdown</h3>
+        <div class="space-y-4">
+            {#each Object.entries(groupedItems) as [type, items]}
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="font-medium text-gray-900 mb-2">{type}</div>
+                    {#each items as item}
+                        <div class="flex justify-between text-sm text-gray-600">
+                            <span>{item.name}</span>
+                            <span class="font-medium">{formatCurrency(item.price)}</span>
+                        </div>
+                    {/each}
                 </div>
             {/each}
-            
-            <div class="subtotal price-row">
-                <span>Subtotal</span>
-                <span>{formatCurrency(pricing.subtotal)}</span>
-            </div>
-            
-            {#if pricing.total !== pricing.subtotal}
-                <div class="total price-row">
-                    <span>Total</span>
-                    <span>{formatCurrency(pricing.total)}</span>
+
+            <!-- Subtotal -->
+            <div class="pt-4 border-t border-gray-200">
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-900">Subtotal</span>
+                    <span class="font-medium text-gray-900">{formatCurrency(pricing.subtotal)}</span>
                 </div>
-            {/if}
+            </div>
+
+            <!-- Total -->
+            <div class="pt-4 border-t-2 border-gray-200">
+                <div class="flex justify-between">
+                    <span class="text-lg font-semibold text-gray-900">Total</span>
+                    <span class="text-lg font-semibold text-gray-900">{formatCurrency(pricing.total)}</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-<style>
-    .order-summary {
-        color: #1e293b;
-    }
-
-    h2 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        color: #0f172a;
-    }
-
-    h3 {
-        font-size: 1.25rem;
-        font-weight: 500;
-        margin-bottom: 1rem;
-        color: #334155;
-    }
-
-    .section {
-        margin-bottom: 2rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid #e2e8f0;
-    }
-
-    .section:last-child {
-        border-bottom: none;
-        margin-bottom: 0;
-        padding-bottom: 0;
-    }
-
-    .details {
-        display: grid;
-        gap: 0.75rem;
-    }
-
-    .detail-row {
-        display: flex;
-        justify-content: space-between;
-        color: #64748b;
-    }
-
-    .location {
-        background-color: #f8fafc;
-        padding: 1rem;
-        border-radius: 0.375rem;
-        margin-bottom: 0.75rem;
-    }
-
-    .location:last-child {
-        margin-bottom: 0;
-    }
-
-    .location h4 {
-        font-weight: 500;
-        margin-bottom: 0.25rem;
-        color: #334155;
-    }
-
-    .location p {
-        color: #64748b;
-        font-size: 0.875rem;
-    }
-
-    .pricing {
-        display: grid;
-        gap: 0.75rem;
-    }
-
-    .price-row {
-        display: grid;
-        grid-template-columns: 1fr auto auto;
-        gap: 1rem;
-        align-items: center;
-    }
-
-    .item-name {
-        color: #64748b;
-    }
-
-    .item-type {
-        color: #94a3b8;
-        font-size: 0.875rem;
-        text-transform: capitalize;
-    }
-
-    .item-price {
-        color: #64748b;
-        font-variant-numeric: tabular-nums;
-    }
-
-    .subtotal {
-        padding-top: 0.75rem;
-        margin-top: 0.75rem;
-        border-top: 1px dashed #e2e8f0;
-        font-weight: 500;
-    }
-
-    .total {
-        padding-top: 0.75rem;
-        margin-top: 0.75rem;
-        border-top: 2px solid #e2e8f0;
-        font-weight: 600;
-        color: #0f172a;
-    }
-
-    @media (max-width: 640px) {
-        .price-row {
-            grid-template-columns: 1fr auto;
-        }
-
-        .item-type {
-            display: none;
-        }
-    }
-</style>

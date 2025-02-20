@@ -1,87 +1,189 @@
-# TributeStream Documentation Index
+# TributeStream Memorial Calculator Documentation
 
-## Introduction
+## Overview
+This documentation set provides comprehensive information about the Memorial Calculator system, including its integration with checkout, deployment procedures, security measures, and monitoring setup.
 
-Welcome to the TributeStream documentation. This comprehensive guide covers all aspects of the TributeStream platform, from architecture to deployment. The documentation is structured to serve both developers and system administrators.
+## Core Documentation
 
-## Documentation Structure
-
-### 1. [Architecture Overview](01-architecture-overview.md)
-- System components and relationships
-- Tech stack details
-- High-level architecture
+### 1. Integration Guide
+[memorial-calculator-checkout-integration.md](./memorial-calculator-checkout-integration.md)
+- Complete integration overview
+- Component architecture
 - Data flow
-- Future considerations
+- Implementation details
+- Future enhancements
 
-### 2. [API Documentation](02-api-documentation.md)
-- Available endpoints
-- Request/response formats
-- Authentication requirements
-- Error handling
-- WordPress integration
+### 2. Deployment Guide
+[memorial-calculator-deployment.md](./memorial-calculator-deployment.md)
+- Environment setup
+- Configuration requirements
+- Deployment procedures
+- Database setup
+- Post-deployment verification
 
-### 3. [Development Setup](03-development-setup.md)
-- Prerequisites
-- Installation steps
-- Project structure
-- Development workflow
-- Code style guidelines
-- Common tasks
+### 3. Security Guide
+[memorial-calculator-security.md](./memorial-calculator-security.md)
+- Authentication & authorization
+- Data protection
+- API security
+- Security headers
+- Monitoring setup
 
-### 4. [Deployment Guide](04-deployment-guide.md)
-- Frontend deployment (Vercel)
-- WordPress backend setup
-- Environment configuration
-- Monitoring and maintenance
-- Troubleshooting
+### 4. Monitoring Guide
+[memorial-calculator-monitoring.md](./memorial-calculator-monitoring.md)
+- Performance monitoring
+- Error tracking
+- System health checks
+- Alerting configuration
+- Incident response
 
-### 5. [Authentication & Security](05-authentication-security.md)
-- Authentication flow
-- Security measures
-- User roles and permissions
-- Session management
-- Security best practices
+### 5. Test Plan
+[memorial-calculator-test-plan.md](./memorial-calculator-test-plan.md)
+- Test environments
+- Test categories
+- Test cases
+- Quality gates
+- Test execution
 
-## Quick Start
+### 6. User Guide
+[memorial-calculator-user-guide.md](./memorial-calculator-user-guide.md)
+- Package information
+- Scheduling services
+- Managing locations
+- Pricing details
+- Support contacts
 
-1. Start with the [Architecture Overview](01-architecture-overview.md) to understand the system
-2. Follow the [Development Setup](03-development-setup.md) to set up your environment
-3. Reference the [API Documentation](02-api-documentation.md) while developing
-4. Use the [Deployment Guide](04-deployment-guide.md) when ready to deploy
-5. Ensure security by following the [Authentication & Security](05-authentication-security.md) guide
+## Quick Links
 
-## Current Version
+### Development Resources
+- [SvelteKit Documentation](https://kit.svelte.dev/)
+- [WordPress REST API Documentation](https://developer.wordpress.org/rest-api/)
+- [Square Payments API](https://developer.squareup.com/docs)
+- [SendGrid API Documentation](https://docs.sendgrid.com/)
 
-This documentation covers the MVP (Minimum Viable Product) version of TributeStream, which includes:
-- SvelteKit 5 frontend
-- WordPress backend with custom REST API
-- JWT authentication
-- Basic user roles (Admin, Editor)
-- Embedded video functionality
+### Support Resources
+- Technical Support: support@tributestream.com
+- Emergency Support: 1-800-TRIBUTE-911
+- Developer Portal: https://dev.tributestream.com
 
-## Documentation Updates
+## Document Updates
 
-This documentation will be updated as new features are added and the system evolves. Key areas for future updates include:
-- Chat functionality
-- Enhanced social features
-- Payment gateway integration
-- Advanced user roles
-- Testing infrastructure
+### Recent Changes
+1. Added monitoring configuration (2/20/2025)
+2. Updated security guidelines (2/20/2025)
+3. Enhanced deployment procedures (2/20/2025)
+4. Added test plan (2/20/2025)
+
+### Upcoming Updates
+1. Infrastructure security guidelines
+2. Performance optimization guide
+3. Advanced monitoring configurations
+4. Extended test cases
+
+## Document Standards
+
+### Format Guidelines
+- Use Markdown for all documentation
+- Include last updated date
+- Maintain table of contents
+- Include code examples
+- Add cross-references
+
+### Code Examples
+- Include TypeScript types
+- Add comments for clarity
+- Show usage examples
+- Include error handling
+
+### Diagrams
+- Use Mermaid for flowcharts
+- Include sequence diagrams
+- Add architecture diagrams
+- Maintain consistency
+
+## Maintenance
+
+### Review Schedule
+- Security documentation: Monthly
+- Deployment guide: Quarterly
+- Integration guide: Bi-annual
+- Test plan: Quarterly
+
+### Version Control
+- All documentation in Git
+- Branch for major updates
+- Review process for changes
+- Version tagging
+
+## Best Practices
+
+### Documentation
+1. Keep content current
+2. Use clear examples
+3. Include error scenarios
+4. Cross-reference related docs
+5. Maintain consistency
+
+### Code Examples
+1. Use TypeScript
+2. Include error handling
+3. Show complete context
+4. Add comments
+5. Follow style guide
+
+### Security
+1. Regular updates
+2. Audit procedures
+3. Access controls
+4. Data protection
+5. Monitoring setup
+
+## Getting Started
+
+### For Developers
+1. Review integration guide
+2. Set up development environment
+3. Run test suite
+4. Review security guidelines
+
+### For Operations
+1. Review deployment guide
+2. Set up monitoring
+3. Configure alerts
+4. Review maintenance procedures
+
+### For Support
+1. Review user guide
+2. Understand error scenarios
+3. Know escalation procedures
+4. Access monitoring tools
 
 ## Contributing
 
-When contributing to the documentation:
-1. Follow the existing format and structure
-2. Update relevant sections when adding features
-3. Keep security documentation current
-4. Maintain clear, concise language
-5. Include code examples where appropriate
+### Documentation Updates
+1. Fork repository
+2. Make changes
+3. Submit pull request
+4. Review process
+5. Merge changes
 
-## Need Help?
+### Code Examples
+1. Follow style guide
+2. Include tests
+3. Add documentation
+4. Review process
+5. Merge changes
 
-If you need assistance or find issues in the documentation:
-1. Check existing documentation thoroughly
-2. Review code comments and inline documentation
-3. Contact the development team
+## Support
 
-Remember to keep this documentation updated as the platform evolves and new features are added.
+### Technical Support
+- Email: support@tributestream.com
+- Phone: 1-800-TRIBUTE
+- Hours: 9 AM - 5 PM EST
+
+### Emergency Support
+- Phone: 1-800-TRIBUTE-911
+- Available: 24/7
+- Response time: < 1 hour
+
+Last Updated: 2/20/2025
