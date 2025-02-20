@@ -1,169 +1,144 @@
-# Payment Booking Checkout Display Implementation Plan
+# Dynamic Checkout Component Implementation Plan
 
 ## Overview
-This plan outlines the implementation strategy for integrating calculator and memorial form data into the payment booking checkout display.
+Create a comprehensive checkout component that combines calculator pricing data, user information, and payment processing into a seamless experience.
 
-## Data Sources
-1. Calculator Data (from cookie)
-   - Package selection
-   - Duration
-   - Livestream date/time
-   - Locations
-   - Pricing details (cart items, total)
-   - Funeral home/director information
+## Component Structure
 
-2. Memorial Form Data (from cookie)
-   - Director details
-   - Family member information
-   - Deceased information
-   - Contact details
-   - Memorial information
+### 1. CheckoutContainer.svelte
+- Main container component orchestrating the checkout flow
+- Manages overall state and step progression
+- Handles data persistence and validation
+
+### 2. OrderSummary.svelte (Enhanced existing implementation)
+- Display line items from calculator
+- Show subtotals and fees
+- Responsive layout for mobile/desktop
+- Collapsible on mobile for better UX
+
+### 3. BuyerInformation.svelte
+- Pre-populated from user metadata
+- Editable fields with validation
+- Fields:
+  - First Name
+  - Last Name
+  - Email
+  - Phone
+  - Company (optional)
+
+### 4. BillingDetails.svelte
+- Address form with validation
+- Option to use different shipping address
+- Country/State selection with proper formatting
+- Address verification integration (future enhancement)
+
+### 5. PaymentForm.svelte (Enhanced CcForm)
+- Secure credit card input using Square
+- Save card for future use option
+- Clear error handling
+- Loading states
+- Success confirmation
+
+## Data Flow
+1. Calculator provides pricing data through props
+2. User metadata pre-populates buyer information
+3. Form state managed using Svelte runes ($state)
+4. Validation occurs at field and form level
+5. Payment processing handled through Square integration
+
+## Technical Implementation
+
+### State Management
+```typescript
+interface CheckoutState {
+  currentStep: number;
+  orderData: PricingDetails;
+  buyerInfo: PersonalDetails;
+  billingAddress: Address;
+  shippingAddress?: Address;
+  useShippingAddress: boolean;
+  paymentMethod: 'card' | 'invoice';
+  saveCard: boolean;
+}
+```
+
+### Validation Rules
+- Required fields clearly marked
+- Email format validation
+- Phone number formatting
+- Address validation
+- Credit card validation through Square
+
+### Error Handling
+- Field-level error messages
+- Form-level validation summary
+- Payment processing errors
+- Network error recovery
+
+### Loading States
+- Initial data loading
+- Address verification
+- Payment processing
+- Success confirmation
+
+## UI/UX Considerations
+
+### Layout
+- Responsive design (mobile-first)
+- Clear step indication
+- Collapsible sections
+- Sticky order summary on desktop
+
+### Visual Feedback
+- Loading indicators
+- Success/error states
+- Field validation indicators
+- Clear call-to-action buttons
+
+### Accessibility
+- ARIA labels
+- Keyboard navigation
+- Error announcements
+- Focus management
+
+## MVP Features
+1. Basic form with required fields
+2. Square payment integration
+3. Order summary display
+4. Simple validation
+5. Success/error handling
+6. Responsive layout
+
+## Future Enhancements
+1. Address verification
+2. Save payment method
+3. Enhanced error recovery
+4. Analytics integration
+5. Receipt generation
+6. Email confirmation
+
+## Testing Strategy
+1. Component unit tests
+2. Integration tests for form submission
+3. Payment flow testing
+4. Responsive design testing
+5. Accessibility testing
 
 ## Implementation Steps
+1. Create base component structure
+2. Implement form layouts
+3. Add validation logic
+4. Integrate Square payments
+5. Add loading states
+6. Implement error handling
+7. Add success flow
+8. Style and responsive design
+9. Testing and refinement
 
-### 1. Server-Side Data Loading
-1. Implement load function in `+page.server.ts`:
-   ```typescript
-   export const load = async ({ cookies }) => {
-     // Get calculator data
-     const calcData = JSON.parse(cookies.get('calculator_data') || '{}');
-     
-     // Get memorial form data
-     const memorialData = JSON.parse(cookies.get('memorial_form_data') || '{}');
-     
-     // Transform data using utility types
-     const transformer: CookieDataTransformer = {
-       fromCalculatorCookie: (data) => ({
-         package: {
-           name: data.selectedPackage,
-           duration: data.duration,
-           livestreamDate: data.livestreamDate,
-           livestreamStartTime: data.livestreamStartTime,
-           locations: data.locations
-         },
-         orderDetails: {
-           pricing: {
-             items: data.cartItems,
-             subtotal: data.total,
-             total: data.total
-           }
-         }
-       }),
-       fromMemorialFormCookie: (data) => ({
-         personalDetails: {
-           firstName: data.director.firstName,
-           lastName: data.director.lastName,
-           email: data.contact.email,
-           phone: data.contact.phone
-         }
-       })
-     };
+## Technical Dependencies
+- Square.js for payments
+- Tailwind CSS for styling
+- SvelteKit for routing/data
+- TypeScript for type safety
 
-     return {
-       formData: {
-         ...transformer.fromCalculatorCookie(calcData),
-         ...transformer.fromMemorialFormCookie(memorialData)
-       }
-     };
-   };
-   ```
-
-### 2. Client-Side Implementation
-1. Update `+page.svelte`:
-   - Create sections for:
-     - Package Details
-     - Service Information
-     - Pricing Breakdown
-     - Personal Information
-   - Implement responsive layout
-   - Add validation checks
-
-2. Component Structure:
-   ```svelte
-   <script lang="ts">
-     import type { PaymentBookingFormData } from '$lib/types/payment-booking';
-     export let data: { formData: PaymentBookingFormData };
-   </script>
-
-   <div class="checkout-display">
-     <!-- Package Summary -->
-     <section>
-       <h2>Package Details</h2>
-       <div class="package-info">
-         <h3>{data.formData.package.name} Package</h3>
-         <p>Duration: {data.formData.package.duration} hours</p>
-         <p>Date: {data.formData.package.livestreamDate}</p>
-         <p>Time: {data.formData.package.livestreamStartTime}</p>
-       </div>
-     </section>
-
-     <!-- Location Information -->
-     <section>
-       <h2>Service Locations</h2>
-       {#each data.formData.package.locations as location}
-         <div class="location">
-           <h3>{location.name}</h3>
-           <p>{location.address}</p>
-         </div>
-       {/each}
-     </section>
-
-     <!-- Pricing Breakdown -->
-     <section>
-       <h2>Order Summary</h2>
-       {#each data.formData.orderDetails.pricing.items as item}
-         <div class="order-item">
-           <span>{item.name}</span>
-           <span>${item.price}</span>
-         </div>
-       {/each}
-       <div class="total">
-         <strong>Total:</strong>
-         <strong>${data.formData.orderDetails.pricing.total}</strong>
-       </div>
-     </section>
-
-     <!-- Personal Information -->
-     <section>
-       <h2>Contact Information</h2>
-       <div class="personal-info">
-         <p>{data.formData.personalDetails.firstName} {data.formData.personalDetails.lastName}</p>
-         <p>{data.formData.personalDetails.email}</p>
-         <p>{data.formData.personalDetails.phone}</p>
-       </div>
-     </section>
-   </div>
-   ```
-
-3. Styling:
-   - Implement clean, organized layout
-   - Use consistent spacing and typography
-   - Ensure mobile responsiveness
-   - Add visual hierarchy for important information
-
-### 3. Error Handling
-1. Implement data validation
-2. Add fallback values for missing data
-3. Show appropriate error messages
-4. Handle edge cases (empty arrays, null values)
-
-### 4. Testing Plan
-1. Test with various package types
-2. Verify all data is displayed correctly
-3. Test responsive layout
-4. Validate error handling
-5. Test with missing or partial data
-
-## Next Steps
-1. Implement server-side load function
-2. Create basic component structure
-3. Add styling and layout
-4. Implement error handling
-5. Add tests
-6. Review and refine
-
-## Notes
-- All monetary values should be properly formatted
-- Dates should be displayed in a user-friendly format
-- Consider adding edit capabilities for each section
-- Implement loading states for data fetching
+This plan provides a structured approach to building the checkout component while maintaining MVP principles. We can proceed with implementation once this plan is approved.
