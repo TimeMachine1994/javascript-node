@@ -17,9 +17,13 @@
 {#if userData?.length}
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-8">Memorial Calculator</h1>
-    <MemorialCalculator 
+    <MemorialCalculator
       data={{ userData }}
       initialPackage="Solo"
+      onSave={(orderData) => {
+        // Success is handled by the MemorialCalculator component
+        console.log('Calculator data saved:', orderData);
+      }}
     />
   </div>
 {:else}

@@ -1,47 +1,48 @@
- <script lang="ts">
-     import Calc from '$lib/Calc.svelte';
-     import type { PageData } from './$types';
-     import { enhance } from '$app/forms';
-     import { goto } from '$app/navigation';
-     
-     export let data: PageData;
+<script lang="ts">
+    import MemorialCalculator from '$lib/components/MemorialCalculator.svelte';
+    import type { PageData } from './$types';
+    import type { OrderData } from '$lib/types/memorial-calculator';
+    import { enhance } from '$app/forms';
+    import { goto } from '$app/navigation';
+    
+    export let data: PageData;
+
+    async function handleCalcSave(orderData: OrderData) {
+        try {
+            const formData = new FormData();
+            formData.append('calculatorData', JSON.stringify(orderData));
+            
+            const response = await fetch('?/saveCalculator', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                console.error('Failed to save calculator data:', result);
+                throw new Error(result.message || 'Failed to save calculator data');
+            }
+
+            alert('Calculator data saved successfully!');
+        } catch (error) {
+            console.error('Error saving calculator data:', error);
+            alert(error instanceof Error ? error.message : 'Failed to save calculator data. Please try again.');
+        }
+    }
+
+    async function handleCheckout(orderData: OrderData) {
+        try {
+            await handleCalcSave(orderData);
+            await goto('/schedule/payment_booking');
+        } catch (error) {
+            console.error('Error during checkout:', error);
+        }
+    }
+</script>
  
-     async function handleCalcSave(orderData: any, shouldCheckout: boolean = false) {
-         try {
-             const formData = new FormData();
-             formData.append('calculatorData', JSON.stringify(orderData));
-             
-             const response = await fetch('?/saveCalculator', {
-                 method: 'POST',
-                 body: formData
-             });
- 
-             const result = await response.json();
- 
-             if (!response.ok) {
-                 console.error('Failed to save calculator data:', result);
-                 throw new Error(result.message || 'Failed to save calculator data');
-             }
- 
-             if (shouldCheckout) {
-                 await goto('/schedule/payment_booking');
-             } else {
-                 alert('Calculator data saved successfully!');
-             }
-         } catch (error) {
-             console.error('Error saving calculator data:', error);
-             alert(error instanceof Error ? error.message : 'Failed to save calculator data. Please try again.');
-         }
-     }
- 
-     function handleCheckout(orderData: any) {
-         return handleCalcSave(orderData, true);
-     }
- </script>
- 
-  
 <div class="flex flex-col items-center justify-center text-center p-8">
-    <p class="text-xl mb-4">Tributestream offers their sinciere condolences for your loss.</p>
+    <p class="text-xl mb-4">Tributestream offers their sincere condolences for your loss.</p>
     <p class="text-lg mb-6">Scan the QR code below to see a free sample of what your custom page will look like.</p>
 
     <div class="flex justify-center items-center mb-8">
@@ -57,8 +58,9 @@
     </button>
     <p class="text-lg">To Complete The Reservation Process</p>
 </div>
-<Calc
-    initialMemorialData={data.memorialData}
+
+<MemorialCalculator
+    data={{ userData: data.userData }}
     onSave={handleCalcSave}
     onCheckout={handleCheckout}
 />

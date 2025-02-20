@@ -129,9 +129,52 @@
     }
   });
 
-  // Initialize cart from userData if available
+  // Initialize cart and user ID from userData if available
   let cartItems = $state<CartItem[]>(data.userData[0]?.calculator_data?.cartItems || []);
   let cartTotal = $state(data.userData[0]?.calculator_data?.cartTotal || 0);
+  let userId = $state(data.userData[0]?.id);
+
+  // Save calculator data to WordPress backend
+  async function saveCalculatorData() {
+    try {
+      if (!userId) {
+        throw new Error('User ID not available');
+      }
+
+      const calculatorData = {
+        scheduleDays,
+        cartItems,
+        cartTotal,
+        selectedPackage,
+        personalDetails
+      };
+
+      const response = await fetch('/api/user-meta', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          meta_key: 'calculator_data',
+          meta_value: JSON.stringify(calculatorData)
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save calculator data');
+      }
+
+      // Show success message
+      alert('Calculator data saved successfully');
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving calculator data:', error);
+      alert('Failed to save calculator data. Please try again.');
+      throw error;
+    }
+  }
 
   $effect(() => {
     const items: CartItem[] = [];
@@ -386,7 +429,15 @@
   <!-- Action Buttons -->
   <div class="actions mt-6 flex gap-4">
     <button
-      onclick={async () => await onSave?.(await transformToOrderData())}
+      onclick={async () => {
+        try {
+          await saveCalculatorData();
+          const orderData = await transformToOrderData();
+          await onSave?.(orderData);
+        } catch (error) {
+          console.error('Error during save:', error);
+        }
+      }}
       class="flex-1 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
     >
       Save

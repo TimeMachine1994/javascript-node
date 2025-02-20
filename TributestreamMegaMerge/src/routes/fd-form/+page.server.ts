@@ -117,8 +117,10 @@ async function sendEmails(
     }
 }
 
+import type { RequestEvent } from '@sveltejs/kit';
+
 export const actions = {
-    default: async ({ request, cookies, fetch }) => {
+    default: async ({ request, cookies, fetch }: RequestEvent) => {
         let password = '';
         let userId = '';
         let token = '';
@@ -279,33 +281,88 @@ export const actions = {
             };
 
             console.log('Saving user metadata...');
-            // Save user metadata
-            const metaPayload = {
-                user_id: userId,
-                meta_key: 'memorial_form_data',
-                meta_value: JSON.stringify(memorialData)
+            
+            // Create calculator data from memorial form
+            const calculatorData = {
+                scheduleDays: [{
+                    date: data.memorialDate,
+                    locations: [{
+                        name: data.locationName,
+                        address: data.locationAddress,
+                        startTime: data.memorialTime,
+                        duration: 2, // Default 2 hours
+                        travelExceedsHour: false,
+                        notes: ""
+                    }]
+                }],
+                cartItems: [{
+                    name: "Memorial Service",
+                    price: 299 // Default price for Solo package
+                }],
+                cartTotal: 299,
+                selectedPackage: "Solo",
+                personalDetails: {
+                    firstName: data.familyMemberFirstName,
+                    lastName: data.familyMemberLastName,
+                    email: data.email,
+                    phone: data.phone
+                }
             };
 
-            const metaResponse = await fetch(`/api/user-meta`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(metaPayload)
-            });
+            // Save both memorial form data and calculator data
+            const [memorialMetaResponse, calculatorMetaResponse] = await Promise.all([
+                fetch(`/api/user-meta`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        meta_key: 'memorial_form_data',
+                        meta_value: JSON.stringify(memorialData)
+                    })
+                }),
+                fetch(`/api/user-meta`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        meta_key: 'calculator_data',
+                        meta_value: JSON.stringify(calculatorData)
+                    })
+                })
+            ]);
 
-            const metaResult = await metaResponse.json();
-            
-            if (!metaResponse.ok || metaResult.error) {
-                console.error('Failed to save metadata:', metaResult);
-                return fail(metaResponse.status, { 
-                    error: true, 
-                    message: metaResult.message || 'Failed to save user metadata' 
+            const [memorialMetaResult, calculatorMetaResult] = await Promise.all([
+                memorialMetaResponse.json(),
+                calculatorMetaResponse.json()
+            ]);
+
+            // Check memorial form data save
+            if (!memorialMetaResponse.ok || memorialMetaResult.error) {
+                console.error('Failed to save memorial metadata:', memorialMetaResult);
+                return fail(memorialMetaResponse.status, {
+                    error: true,
+                    message: memorialMetaResult.message || 'Failed to save user metadata'
                 });
             }
-             let roles: string[] = []; // Fix: Ensure `roles` is defined before using it
-             console.log('Metadata saved successfully');
+
+            // Log but don't fail if calculator data save fails
+            if (!calculatorMetaResponse.ok || calculatorMetaResult.error) {
+                console.error('Failed to save calculator metadata:', calculatorMetaResult);
+                console.warn('Proceeding despite calculator data save failure');
+            }
+
+            // Use the memorial meta result for the user cookie
+            const metaResult = memorialMetaResult;
+            console.log('Metadata saved successfully');
+
+            // Define roles array
+            const roles = authResult.roles || [];
             // Step 7: Set user data with roles and meta data (client-accessible)
             cookies.set('user', JSON.stringify({
                 displayName: authResult.user_display_name,
@@ -330,7 +387,6 @@ export const actions = {
                             metaResult: metaResult
                         });
             
-            console.log
             //create tribute
             console.log('Creating tribute...');
             // Create tribute
