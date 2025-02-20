@@ -1,131 +1,229 @@
 <script lang="ts">
-  import type { UserMetadata, ApiError } from '$lib/types/user-metadata';
+  import { onMount } from 'svelte';
+  import type { PageData } from './$types';
+  import type { CartItem } from '$lib/types/user-metadata';
+  
+  export let data: PageData;
+  
+  // Destructure calculator data with reactive statement
+  $: ({
+    cartItems,
+    cartTotal,
+    personalDetails
+  } = data.calculatorData);
 
-  // Props passed from layout
-  let { userData, userError, isLoading } = $props<{
-    userData: UserMetadata | null;
-    userError: ApiError | null;
-    isLoading: boolean;
-  }>();
+  // Form validation state
+  let errors: Record<string, string> = {};
+  let isProcessing = false;
+  let paymentError = '';
+  let cardNumber = '';
+  let cardExpiry = '';
+  let cardCvc = '';
 
-  // Computed values for checkout
-  let personalDetails = $derived(userData?.calculator_data?.personalDetails ?? null);
-  let cartItems = $derived(userData?.calculator_data?.cartItems ?? []);
-  let cartTotal = $derived(userData?.calculator_data?.cartTotal ?? 0);
-  let selectedPackage = $derived(userData?.calculator_data?.selectedPackage ?? '');
-  let memorialDetails = $derived(userData?.memorial_form_data?.memorial ?? null);
+  // Validate form fields
+  function validateForm(): boolean {
+    errors = {};
+    
+    if (!personalDetails.firstName) errors.firstName = 'First name is required';
+    if (!personalDetails.lastName) errors.lastName = 'Last name is required';
+    if (!personalDetails.email) errors.email = 'Email is required';
+    if (!personalDetails.phone) errors.phone = 'Phone number is required';
+    
+    // Payment validation
+    if (!cardNumber) errors.cardNumber = 'Card number is required';
+    if (!cardExpiry) errors.cardExpiry = 'Expiry date is required';
+    if (!cardCvc) errors.cardCvc = 'CVC is required';
+    
+    return Object.keys(errors).length === 0;
+  }
 
-  // Validation state
-  let hasRequiredData = $derived(
-    !!personalDetails?.firstName &&
-    !!personalDetails?.lastName &&
-    !!personalDetails?.email &&
-    cartItems.length > 0
-  );
-
-  // Handle checkout submission
-  async function handleCheckout() {
-    if (!hasRequiredData) {
-      return;
+  // Handle form submission
+  async function handleSubmit(event: Event) {
+    event.preventDefault();
+    
+    if (!validateForm()) return;
+    
+    isProcessing = true;
+    paymentError = '';
+    
+    try {
+      // TODO: Implement payment processing
+      // For now, we'll just simulate a successful payment
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Redirect to confirmation page
+      window.location.href = '/checkout/confirmation';
+    } catch (error) {
+      paymentError = error instanceof Error ? error.message : 'Payment processing failed';
+    } finally {
+      isProcessing = false;
     }
-    // Checkout logic will be implemented here
   }
 </script>
 
-{#if !userData}
-  <div class="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-    <div class="text-destructive">
-      Please complete the memorial calculator before proceeding to checkout
-    </div>
-    <a 
-      href="/calc" 
-      class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-    >
-      Go to Calculator
-    </a>
-  </div>
-{:else}
-  <div class="max-w-4xl mx-auto p-6 space-y-8">
-    <h1 class="text-3xl font-bold">Checkout</h1>
-    
-    <!-- Personal Information -->
-    <div class="bg-card p-6 rounded-lg shadow-sm">
-      <h2 class="text-xl font-semibold mb-4">Personal Information</h2>
-      {#if personalDetails}
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <span class="font-medium">Name:</span>
-            <span>{personalDetails.firstName} {personalDetails.lastName}</span>
-          </div>
-          <div>
-            <span class="font-medium">Email:</span>
-            <span>{personalDetails.email}</span>
-          </div>
-          <div>
-            <span class="font-medium">Phone:</span>
-            <span>{personalDetails.phone}</span>
-          </div>
-        </div>
-      {:else}
-        <div class="text-destructive">Personal information is incomplete</div>
-      {/if}
-    </div>
+<div class="min-h-screen bg-gray-100">
+  <div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Checkout Form -->
+      <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-semibold text-gray-800 mb-6">
+          <i class="fas fa-heart mr-2"></i>
+          Memorial Service Checkout
+        </h1>
 
-    <!-- Memorial Details -->
-    {#if memorialDetails}
-      <div class="bg-card p-6 rounded-lg shadow-sm">
-        <h2 class="text-xl font-semibold mb-4">Memorial Details</h2>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <span class="font-medium">Location:</span>
-            <span>{memorialDetails.location}</span>
-          </div>
-          <div>
-            <span class="font-medium">Date:</span>
-            <span>{memorialDetails.date}</span>
-          </div>
-          <div>
-            <span class="font-medium">Time:</span>
-            <span>{memorialDetails.time}</span>
+        <form on:submit={handleSubmit}>
+          <!-- Personal Information -->
+          <section class="mb-8">
+            <h2 class="text-xl font-medium text-gray-700 mb-4">
+              <i class="fas fa-user mr-2"></i>
+              Personal Information
+            </h2>
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="First Name"
+                    class="w-full p-3 border border-gray-300 rounded-lg {errors.firstName ? 'border-red-500' : ''}"
+                    bind:value={personalDetails.firstName}
+                  />
+                  {#if errors.firstName}
+                    <p class="text-red-500 text-sm mt-1">{errors.firstName}</p>
+                  {/if}
+                </div>
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="Last Name"
+                    class="w-full p-3 border border-gray-300 rounded-lg {errors.lastName ? 'border-red-500' : ''}"
+                    bind:value={personalDetails.lastName}
+                  />
+                  {#if errors.lastName}
+                    <p class="text-red-500 text-sm mt-1">{errors.lastName}</p>
+                  {/if}
+                </div>
+              </div>
+              <div>
+                <input 
+                  type="email" 
+                  placeholder="Email Address"
+                  class="w-full p-3 border border-gray-300 rounded-lg {errors.email ? 'border-red-500' : ''}"
+                  bind:value={personalDetails.email}
+                />
+                {#if errors.email}
+                  <p class="text-red-500 text-sm mt-1">{errors.email}</p>
+                {/if}
+              </div>
+              <div>
+                <input 
+                  type="tel" 
+                  placeholder="Phone Number"
+                  class="w-full p-3 border border-gray-300 rounded-lg {errors.phone ? 'border-red-500' : ''}"
+                  bind:value={personalDetails.phone}
+                />
+                {#if errors.phone}
+                  <p class="text-red-500 text-sm mt-1">{errors.phone}</p>
+                {/if}
+              </div>
+            </div>
+          </section>
+
+          <!-- Payment Information -->
+          <section class="mb-8">
+            <h2 class="text-xl font-medium text-gray-700 mb-4">
+              <i class="fas fa-credit-card mr-2"></i>
+              Payment Details
+            </h2>
+            <div class="space-y-4">
+              <div>
+                <input 
+                  type="text" 
+                  placeholder="Card Number"
+                  class="w-full p-3 border border-gray-300 rounded-lg {errors.cardNumber ? 'border-red-500' : ''}"
+                  bind:value={cardNumber}
+                />
+                {#if errors.cardNumber}
+                  <p class="text-red-500 text-sm mt-1">{errors.cardNumber}</p>
+                {/if}
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="MM/YY"
+                    class="w-full p-3 border border-gray-300 rounded-lg {errors.cardExpiry ? 'border-red-500' : ''}"
+                    bind:value={cardExpiry}
+                  />
+                  {#if errors.cardExpiry}
+                    <p class="text-red-500 text-sm mt-1">{errors.cardExpiry}</p>
+                  {/if}
+                </div>
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="CVC"
+                    class="w-full p-3 border border-gray-300 rounded-lg {errors.cardCvc ? 'border-red-500' : ''}"
+                    bind:value={cardCvc}
+                  />
+                  {#if errors.cardCvc}
+                    <p class="text-red-500 text-sm mt-1">{errors.cardCvc}</p>
+                  {/if}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {#if paymentError}
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+              {paymentError}
+            </div>
+          {/if}
+
+          <button 
+            type="submit"
+            class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isProcessing}
+          >
+            {#if isProcessing}
+              <i class="fas fa-spinner fa-spin mr-2"></i>
+              Processing...
+            {:else}
+              <i class="fas fa-lock mr-2"></i>
+              Complete Payment - ${cartTotal.toFixed(2)}
+            {/if}
+          </button>
+        </form>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="bg-white rounded-lg shadow-lg p-6 h-fit">
+        <h2 class="text-xl font-medium text-gray-700 mb-4">
+          <i class="fas fa-clipboard-list mr-2"></i>
+          Order Summary
+        </h2>
+
+        <div class="space-y-4">
+          {#each cartItems as item}
+            <div class="border-b pb-4">
+              <div class="flex justify-between">
+                <div>
+                  <h3 class="font-medium">{item.name}</h3>
+                </div>
+                <p class="font-medium">${item.price.toFixed(2)}</p>
+              </div>
+            </div>
+          {/each}
+
+          <div class="flex justify-between pt-4">
+            <span class="font-medium">Total</span>
+            <span class="font-medium">${cartTotal.toFixed(2)}</span>
           </div>
         </div>
       </div>
-    {/if}
-
-    <!-- Order Summary -->
-    <div class="bg-card p-6 rounded-lg shadow-sm">
-      <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
-      {#if cartItems.length > 0}
-        <div class="space-y-4">
-          <div class="divide-y">
-            {#each cartItems as item}
-              <div class="py-2 flex justify-between">
-                <span>{item.name}</span>
-                <span>${item.price.toFixed(2)}</span>
-              </div>
-            {/each}
-          </div>
-          <div class="pt-4 border-t border-border">
-            <div class="flex justify-between font-bold">
-              <span>Total</span>
-              <span>${cartTotal.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-      {:else}
-        <div class="text-destructive">No items in cart</div>
-      {/if}
-    </div>
-
-    <!-- Checkout Button -->
-    <div class="flex justify-end pt-6">
-      <button
-        class="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={!hasRequiredData}
-        on:click={handleCheckout}
-      >
-        Proceed to Payment
-      </button>
     </div>
   </div>
-{/if}
+</div>
+
+<svelte:head>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</svelte:head>
