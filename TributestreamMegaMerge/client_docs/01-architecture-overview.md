@@ -12,6 +12,7 @@ This documentation provides a comprehensive overview of the Tributestream platfo
 - Media handling
 - Deployment infrastructure
 - Email system
+- Memorial service scheduling and pricing
 
 ### Tech Stack Summary
 - **Frontend**: SvelteKit 5, Tailwind CSS
@@ -31,12 +32,16 @@ This documentation provides a comprehensive overview of the Tributestream platfo
    - Communicates with WordPress REST API
    - Handles authentication state
    - Manages email communications via SendGrid
+   - Processes memorial service scheduling and pricing
+   - Handles multi-day event coordination
 
 2. **WordPress Backend**
    - Provides REST API endpoints
    - Manages database operations
    - Handles media storage
    - Manages user authentication
+   - Stores memorial service configurations
+   - Maintains pricing rules and calculations
 
 3. **Media Handling**
    - Embedded video codes integration
@@ -50,6 +55,8 @@ This documentation provides a comprehensive overview of the Tributestream platfo
 4. Responses are formatted and returned to the frontend
 5. Frontend renders the updated UI
 6. Email notifications sent via SendGrid when required
+7. Memorial calculator updates pricing in real-time
+8. Schedule data persisted to WordPress metadata
 
 ## 3. Frontend Architecture
 
@@ -60,25 +67,40 @@ src/
 ├── app.html             # HTML template
 ├── hooks.server.ts      # Server hooks
 ├── lib/                 # Shared utilities
+│   ├── components/     # Reusable components
+│   │   └── MemorialCalculator.svelte  # Memorial pricing component
 │   ├── types/          # TypeScript definitions
 │   └── utils/          # Utility functions
 └── routes/             # Application routes
     ├── api/            # API endpoints
     ├── login/          # Authentication pages
-    └── fd-form/        # Form handling
+    ├── fd-form/        # Form handling
+    └── calc/           # Calculator routes
 ```
 
 ### Key Technologies
 - **Framework**: SvelteKit 5
 - **Styling**: Tailwind CSS
-- **State Management**: Props and cookies (keeping it simple for MVP)
-- **TypeScript**: Partial implementation for type safety
+- **State Management**: 
+  - Props and cookies for basic state
+  - Svelte 5 runes for complex reactive state
+  - TypeScript for type safety
 - **Email**: SendGrid integration for notifications
+
+### Memorial Calculator Component
+- Implements multi-day scheduling
+- Manages location coordination
+- Handles dynamic pricing calculations
+- Uses Svelte 5 runes for state management
+- Provides real-time cost updates
+- Supports up to 3 locations per day
+- Implements package-based pricing
 
 ### Routing Structure
 - File-based routing using SvelteKit conventions
 - Server-side and client-side routes clearly separated
 - API routes handled through +server.ts/js files
+- Calculator-specific routes for scheduling
 
 ### Authentication Flow
 1. User credentials submitted to login endpoint
@@ -92,6 +114,7 @@ src/
 - Custom plugin extending WordPress REST API
 - JWT authentication for secure communication
 - Endpoints for user management and content
+- Memorial service data storage and retrieval
 
 ### Key Endpoints
 - `/api/auth`: Authentication handling
@@ -99,6 +122,7 @@ src/
 - `/api/tributes`: Tribute-related operations
 - `/api/register`: User registration
 - `/api/send-email`: Email functionality
+- `/api/memorial-calculator`: Calculator data persistence
 
 ### Media Management
 - WordPress media library for storage
@@ -129,6 +153,7 @@ src/
 - HTTPS enforcement
 - Secure media handling
 - WordPress security best practices
+- Secure storage of pricing data
 
 ## 7. Future Considerations
 
@@ -137,11 +162,17 @@ src/
 - Enhanced social features
 - Payment gateway integration
 - Advanced user roles
+- Calendar integration for memorial services
+- Location suggestions system
+- Travel time estimation
+- Advanced schedule validation
 
 ### Technical Debt
 - Implementation of comprehensive testing
 - Enhanced type safety
 - CORS and rate limiting implementation
+- Optimization of pricing calculations
+- Schedule conflict detection
 
 ## 8. Development Workflow
 
@@ -168,3 +199,4 @@ src/
 - WordPress Plugin Documentation (separate repository)
 - API Endpoint Documentation
 - Environment Setup Guide
+- Memorial Calculator Technical Documentation

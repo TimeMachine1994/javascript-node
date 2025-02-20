@@ -1,12 +1,13 @@
 <script lang="ts">
-  import type { 
-    MemorialFormData, 
-    Package, 
-    Location, 
+  import type {
+    MemorialFormData,
+    Package,
+    Location,
     CartItem,
     OrderData,
-    ScheduleDay 
+    ScheduleDay
   } from '$lib/types/memorial-calculator';
+  import { goto } from '$app/navigation';
 
   // Props
   let { 
@@ -117,8 +118,8 @@
     );
   }
 
-  function transformToOrderData(): OrderData {
-    return {
+  async function transformToOrderData(): Promise<OrderData> {
+    const orderData = {
       personalDetails: {
         firstName: memorialFormData?.familyMember.firstName ?? "",
         lastName: memorialFormData?.familyMember.lastName ?? "",
@@ -141,6 +142,14 @@
         }
       }
     };
+
+    // Redirect to checkout page
+    await goto('/checkout', {
+      replaceState: true,
+      state: { orderData }
+    });
+
+    return orderData;
   }
 </script>
 
@@ -150,7 +159,7 @@
     {#each PACKAGES as pkg}
       <button 
         class="px-4 py-2 rounded-lg border-2 {selectedPackage === pkg.name ? 'border-primary bg-primary/10' : 'border-gray-200'}"
-        on:click={() => selectedPackage = pkg.name}
+        onclick={() => selectedPackage = pkg.name}
       >
         <span class="block font-semibold">{pkg.name}</span>
         <span class="block text-sm text-gray-600">${pkg.price}</span>
@@ -166,7 +175,7 @@
           <h3 class="text-lg font-semibold">Day {dayIndex + 1}</h3>
           {#if scheduleDays.length > 1}
             <button 
-              on:click={() => removeDay(dayIndex)}
+              onclick={() => removeDay(dayIndex)}
               class="text-sm text-red-600 hover:text-red-700"
             >
               Remove Day
@@ -191,7 +200,7 @@
                 <h4 class="font-medium">Location {locationIndex + 1}</h4>
                 {#if locationIndex > 0}
                   <button 
-                    on:click={() => removeLocation(dayIndex, locationIndex)}
+                    onclick={() => removeLocation(dayIndex, locationIndex)}
                     class="text-sm text-red-600 hover:text-red-700"
                   >
                     Remove Location
@@ -256,7 +265,7 @@
 
           {#if day.locations.length < 3}
             <button 
-              on:click={() => addLocation(dayIndex)}
+              onclick={() => addLocation(dayIndex)}
               class="text-sm text-primary hover:text-primary-dark"
             >
               Add Location (${day.locations.length}/3)
@@ -267,7 +276,7 @@
     {/each}
 
     <button 
-      on:click={addDay}
+      onclick={addDay}
       class="w-full py-2 text-center border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary hover:text-primary"
     >
       Add Another Day
@@ -298,14 +307,14 @@
 
   <!-- Action Buttons -->
   <div class="actions mt-6 flex gap-4">
-    <button 
-      on:click={() => onSave?.(transformToOrderData())}
+    <button
+      onclick={async () => await onSave?.(await transformToOrderData())}
       class="flex-1 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
     >
       Save
     </button>
-    <button 
-      on:click={() => onCheckout?.(transformToOrderData())}
+    <button
+      onclick={async () => await onCheckout?.(await transformToOrderData())}
       class="flex-1 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
     >
       Checkout
