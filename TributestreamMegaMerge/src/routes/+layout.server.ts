@@ -1,48 +1,10 @@
 import type { LayoutServerLoad } from './$types';
-import type { UserMetadata, CalculatorData, Package } from '$lib/types/user-metadata';
+import type { UserMetadata, CalculatorData, Package, WPUserData, WPMemorialFormData } from '$lib/types/user-metadata';
 
-interface WPUserData {
-  displayName: string;
-  email: string;
-  nicename: string;
-  roles: string[];
-  isAdmin: boolean;
-  metaResult: {
-    success: boolean;
-    message: string;
-    user_id: number;
-    meta_key: string;
-    meta_value: string;
-    version?: string;
-  };
-}
-
-interface WPMemorialFormData {
-  director: {
-    firstName: string;
-    lastName: string;
-  };
-  familyMember: {
-    firstName: string;
-    lastName: string;
-    dob: string;
-  };
-  deceased: {
-    firstName: string;
-    lastName: string;
-    dob: string;
-    dop: string;
-  };
-  contact: {
-    email: string;
-    phone: string;
-  };
-  memorial: {
-    locationName: string;
-    locationAddress: string;
-    time: string;
-    date: string;
-  };
+// Define layout data interface
+interface LayoutData {
+  userData: UserMetadata[];
+  wpUserData?: WPUserData;
 }
 
 function getDataVersion(wpUserData: WPUserData): string {
@@ -154,16 +116,27 @@ function handleDataError(error: Error): CalculatorData {
   };
 }
 
-export const load: LayoutServerLoad = async ({ cookies }) => {
+export const load: LayoutServerLoad<LayoutData> = async ({ cookies }) => {
   const userDataCookie = cookies.get('user');
   console.log('userDataCookie:', userDataCookie);
   
   let userDataArray: UserMetadata[] = [];
+  let wpUserData: WPUserData | undefined;
 
   try {
     if (userDataCookie) {
       // Parse the cookie string into WPUserData
-      const wpUserData: WPUserData = JSON.parse(userDataCookie);
+      const parsedWPUserData: WPUserData = JSON.parse(userDataCookie);
+      
+      // Store the WordPress user data
+      wpUserData = {
+        displayName: parsedWPUserData.displayName,
+        email: parsedWPUserData.email,
+        nicename: parsedWPUserData.nicename,
+        roles: parsedWPUserData.roles,
+        isAdmin: parsedWPUserData.roles.includes('administrator'),
+        metaResult: parsedWPUserData.metaResult
+      };
       
       // Parse the meta_value string which contains the memorial form data
       if (wpUserData.metaResult?.meta_value) {
@@ -224,6 +197,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
   }
 
   return {
-    userData: userDataArray
+    userData: userDataArray,
+    wpUserData // Include WordPress user data in the response
   };
 };

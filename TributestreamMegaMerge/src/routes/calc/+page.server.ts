@@ -49,36 +49,70 @@ const DEFAULT_CALCULATOR_DATA: CalculatorData = {
 };
 
 export const load: PageServerLoad = async ({ parent, fetch }) => {
-  // Get the parent layout data which includes userData
-  const { userData } = await parent();
-  
-  // Initialize calculator data if it doesn't exist
-  if (userData?.[0] && !userData[0].calculator_data) {
+  // Get the parent layout data which includes userData and wpUserData
+  const { userData, wpUserData } = await parent();
+
+  // Early return if no WordPress user data is available
+  if (!wpUserData?.metaResult?.user_id) {
+    console.error('No WordPress user ID available');
+    return { userData };
+  }
+
+  // Check if we need to initialize calculator data
+  const userDataEntry = userData[0];
+  const needsInitialization = !userDataEntry?.calculator_data;
+
+  if (needsInitialization) {
     try {
+      // Initialize calculator data via API
       const response = await fetch('/api/user-meta', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          user_id: userData[0].id,
+          user_id: wpUserData.metaResult.user_id,
           meta_key: 'calculator_data',
           meta_value: JSON.stringify(DEFAULT_CALCULATOR_DATA)
         })
       });
 
       if (!response.ok) {
-        console.error('Failed to save default calculator data');
-      } else {
-        // Update the userData with default calculator data
-        userData[0].calculator_data = DEFAULT_CALCULATOR_DATA;
+        throw new Error(`Failed to save calculator data: ${response.statusText}`);
       }
+
+      // Update local data structure only after successful API call
+      const updatedUserData = [...userData];
+      if (!updatedUserData[0]) {
+        // Initialize new user data entry if it doesn't exist
+        updatedUserData[0] = {
+          memorial_form_data: userDataEntry?.memorial_form_data ?? {
+            director: { firstName: '', lastName: '' },
+            familyMember: { name: '', dob: '' },
+            deceased: { name: '', dob: '', dateOfPassing: '' },
+            contact: { email: '', phone: '' },
+            memorial: { location: '', date: '', time: '' }
+          },
+          calculator_data: DEFAULT_CALCULATOR_DATA
+        };
+      } else {
+        // Update existing entry's calculator data
+        updatedUserData[0] = {
+          ...updatedUserData[0],
+          calculator_data: DEFAULT_CALCULATOR_DATA
+        };
+      }
+
+      return {
+        userData: updatedUserData
+      };
     } catch (error) {
-      console.error('Error saving default calculator data:', error);
+      console.error('Error initializing calculator data:', error);
+      // Return existing data if initialization fails
+      return { userData };
     }
   }
-  
-  return {
-    userData
-  };
+
+  // Return existing data if no initialization was needed
+  return { userData };
 };

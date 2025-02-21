@@ -1,13 +1,36 @@
 <script lang="ts">
   import '../app.css';
-  import type { UserMetadata } from '$lib/types/user-metadata';
+  import type { UserMetadata, WPUserData } from '$lib/types/user-metadata';
   
   // Get the data passed from layout.server.ts
-  export let data: { userData: UserMetadata[] };
+  export let data: { userData: UserMetadata[]; wpUserData?: WPUserData };
+
+  // Reactive declarations for WordPress user data
+  $: wpUser = data.wpUserData;
+  $: isLoggedIn = !!wpUser;
+  $: isAdmin = wpUser?.roles?.includes('administrator') ?? false;
+  $: userDisplayName = wpUser?.displayName ?? '';
 
   // Debug: Log the data when it changes
   $: console.log('Layout Data:', data);
 </script>
+
+<!-- User Info Section -->
+{#if isLoggedIn}
+  <div class="bg-secondary text-secondary-foreground p-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <div>
+        Welcome, {userDisplayName}
+        {#if isAdmin}
+          <span class="ml-2 px-2 py-1 bg-primary text-primary-foreground rounded text-xs">Admin</span>
+        {/if}
+      </div>
+      <div class="text-sm">
+        {wpUser?.email}
+      </div>
+    </div>
+  </div>
+{/if}
 
 <!-- Debug display -->
 <div class="bg-gray-100 p-4 text-sm">
@@ -84,9 +107,9 @@
                   </div>
                 {/if}
 
-                {#if user.calculator_data.cartTotal}
+                {#if user.calculator_data.cart?.total}
                   <div>
-                    <strong>Total:</strong> ${user.calculator_data.cartTotal}
+                    <strong>Total:</strong> ${user.calculator_data.cart.total}
                   </div>
                 {/if}
               </div>

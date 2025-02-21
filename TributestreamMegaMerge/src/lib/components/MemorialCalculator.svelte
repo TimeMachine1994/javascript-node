@@ -4,20 +4,48 @@
     Package,
     Location,
     CartItem,
-    OrderData,
-    ScheduleDay
-  } from '$lib/types/memorial-calculator';
-  import type { UserMetadata } from '$lib/types/user-metadata';
+    ScheduleDay,
+    CalculatorData,
+    WPUserData,
+    UserMetadata
+  } from '$lib/types/user-metadata';
+ 
+  interface OrderData {
+    personalDetails: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+    };
+    package: {
+      name: string;
+      scheduleDays: ScheduleDay[];
+    };
+    orderDetails: {
+      pricing: {
+        items: CartItem[];
+        subtotal: number;
+        total: number;
+      };
+      package: {
+        name: string;
+        scheduleDays: ScheduleDay[];
+      };
+    };
+  }
   import { goto } from '$app/navigation';
 
   // Props
-  let { 
+  let {
     data,
     initialPackage = "Solo",
     onSave,
-    onCheckout 
+    onCheckout
   } = $props<{
-    data: { userData: UserMetadata[] };
+    data: {
+      userData: UserMetadata[];
+      wpUserData: WPUserData;
+    };
     initialPackage?: string;
     onSave?: (data: OrderData) => void;
     onCheckout?: (data: OrderData) => void;
@@ -25,9 +53,27 @@
 
   // Constants
   const PACKAGES: Package[] = [
-    { name: "Tributestream Solo", price: 550 },
-    { name: "Tributestream Gold", price: 1100 },
-    { name: "Tributestream Legacy", price: 2799 }
+    {
+      id: "solo",
+      name: "Tributestream Solo",
+      description: "Basic memorial package",
+      basePrice: 550,
+      features: []
+    },
+    {
+      id: "gold",
+      name: "Tributestream Gold",
+      description: "Enhanced memorial package",
+      basePrice: 1100,
+      features: []
+    },
+    {
+      id: "legacy",
+      name: "Tributestream Legacy",
+      description: "Premium memorial package",
+      basePrice: 2799,
+      features: []
+    }
   ];
 
   const DEFAULT_LOCATION: Location = {
@@ -130,9 +176,9 @@
   });
 
   // Initialize cart and user ID from userData if available
-  let cartItems = $state<CartItem[]>(data.userData[0]?.calculator_data?.cartItems || []);
-  let cartTotal = $state(data.userData[0]?.calculator_data?.cartTotal || 0);
-  let userId = $state(data.userData[0]?.id);
+  let cartItems = $state<CartItem[]>(data.userData[0]?.calculator_data?.cart?.items || []);
+  let cartTotal = $state(data.userData[0]?.calculator_data?.cart?.total || 0);
+  let userId = $state(data.wpUserData.metaResult.user_id);
 
   // Save calculator data to WordPress backend
   async function saveCalculatorData() {
@@ -142,10 +188,20 @@
       }
 
       const calculatorData = {
+        meta: {
+          status: 'draft',
+          lastUpdated: new Date().toISOString(),
+          version: '2.0.0'
+        },
         scheduleDays,
-        cartItems,
-        cartTotal,
         selectedPackage,
+        cart: {
+          items: cartItems,
+          subtotal: cartTotal,
+          total: cartTotal,
+          discounts: [],
+          taxes: []
+        },
         personalDetails
       };
 
@@ -183,8 +239,11 @@
     // Add package price
     const packageItem = PACKAGES.find(p => p.name.includes(selectedPackage));
     if (packageItem) {
-      items.push(packageItem);
-      total += packageItem.price;
+      items.push({
+        name: packageItem.name,
+        price: packageItem.basePrice
+      });
+      total += packageItem.basePrice;
     }
 
     // Calculate costs for all days and locations
@@ -192,9 +251,8 @@
       // Additional locations beyond the first one cost extra
       day.locations.slice(1).forEach((location, locationIndex) => {
         items.push({
-          name: `Additional Location (Day ${dayIndex + 1}, Location ${locationIndex + 2})`,
-          price: 349,
-          description: location.name
+          name: `Additional Location (Day ${dayIndex + 1}, Location ${locationIndex + 2}) - ${location.name}`,
+          price: 349
         });
         total += 349;
       });
@@ -204,9 +262,8 @@
         const extraHours = Math.max(0, location.duration - 2);
         if (extraHours > 0) {
           items.push({
-            name: `Extra Duration (Day ${dayIndex + 1}, Location ${locationIndex + 1})`,
-            price: extraHours * 125,
-            description: `${extraHours} additional hours at ${location.name}`
+            name: `Extra Duration (Day ${dayIndex + 1}, Location ${locationIndex + 1}) - ${extraHours} additional hours at ${location.name}`,
+            price: extraHours * 125
           });
           total += extraHours * 125;
         }
@@ -283,7 +340,7 @@
         onclick={() => selectedPackage = pkg.name}
       >
         <span class="block font-semibold">{pkg.name}</span>
-        <span class="block text-sm text-gray-600">${pkg.price}</span>
+        <span class="block text-sm text-gray-600">${pkg.basePrice}</span>
       </button>
     {/each}
   </div>
@@ -412,9 +469,6 @@
         <div class="flex justify-between text-sm">
           <div>
             <span>{item.name}</span>
-            {#if item.description}
-              <span class="block text-xs text-gray-500">{item.description}</span>
-            {/if}
           </div>
           <span>${item.price}</span>
         </div>

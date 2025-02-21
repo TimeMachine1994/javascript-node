@@ -4,21 +4,21 @@
   import { error } from '@sveltejs/kit';
 
   const props = $props();
-  const { userData } = props.data as PageData;
+  const { userData, wpUserData } = props.data as PageData;
 
-  // Ensure userData exists before rendering calculator
+  // Ensure userData and wpUserData exist before rendering calculator
   $effect(() => {
-    if (!userData?.length) {
-      throw error(500, 'User data not available');
+    if (!userData?.length || !wpUserData?.metaResult?.user_id) {
+      throw error(500, 'Required user data not available');
     }
   });
 </script>
 
-{#if userData?.length}
+{#if userData?.length && wpUserData?.metaResult?.user_id}
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-8">Memorial Calculator</h1>
     <MemorialCalculator
-      data={{ userData }}
+      data={{ userData, wpUserData }}
       initialPackage="Solo"
       onSave={(orderData) => {
         // Success is handled by the MemorialCalculator component

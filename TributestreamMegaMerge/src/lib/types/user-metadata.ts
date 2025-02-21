@@ -2,6 +2,56 @@
  * Types for user metadata handling and display
  */
 
+/**
+ * Represents WordPress user data including JWT auth response and metadata
+ */
+export interface WPUserData {
+  displayName: string;
+  email: string;
+  nicename: string;
+  roles: string[];
+  isAdmin: boolean;
+  metaResult: {
+    success: boolean;
+    message: string;
+    user_id: number;
+    meta_key: string;
+    meta_value: string;
+    version?: string;
+  };
+}
+
+/**
+ * WordPress memorial form data structure with detailed fields
+ */
+export interface WPMemorialFormData {
+  director: {
+    firstName: string;
+    lastName: string;
+  };
+  familyMember: {
+    firstName: string;
+    lastName: string;
+    dob: string;
+  };
+  deceased: {
+    firstName: string;
+    lastName: string;
+    dob: string;
+    dop: string;
+  };
+  contact: {
+    email: string;
+    phone: string;
+  };
+  memorial: {
+    locationName: string;
+    locationAddress: string;
+    time: string;
+    date: string;
+  };
+}
+
 export interface MemorialFormData {
   director: {
     firstName: string;
@@ -96,6 +146,7 @@ export interface CalculatorData {
 export interface UserMetadata {
   memorial_form_data: MemorialFormData;
   calculator_data: CalculatorData;
+  user_id?: string;  // Made optional since it's not always available
   [key: string]: any;
 }
 
