@@ -92,27 +92,33 @@ This document details the API endpoints available in the TributeStream platform,
 
 ## Tributes
 
-### List Tributes
+### Search Tributes
 - **Endpoint**: `/api/tributes`
 - **Method**: GET
-- **Purpose**: Retrieve list of tributes
+- **Purpose**: Search and retrieve tributes with pagination
 - **Query Parameters**:
-  - page (optional): number
-  - limit (optional): number
+  - search (optional): string - Search term for loved_one_name or slug
+  - page (optional): number - Page number (default: 1)
+  - per_page (optional): number - Items per page (default: 10)
 - **Response**:
   ```json
   {
     "tributes": [
       {
         "id": "number",
-        "title": "string",
-        "content": "string",
-        "author": "string",
-        "created_at": "string"
+        "user_id": "number",
+        "loved_one_name": "string",
+        "slug": "string",
+        "created_at": "string",
+        "updated_at": "string",
+        "custom_html": "string",
+        "phone_number": "string",
+        "number_of_streams": "number"
       }
     ],
-    "total": "number",
-    "page": "number"
+    "total_pages": "number",
+    "total_items": "number",
+    "current_page": "number"
   }
   ```
 
@@ -126,10 +132,14 @@ This document details the API endpoints available in the TributeStream platform,
   ```json
   {
     "id": "number",
-    "title": "string",
-    "content": "string",
-    "author": "string",
-    "created_at": "string"
+    "user_id": "number",
+    "loved_one_name": "string",
+    "slug": "string",
+    "created_at": "string",
+    "updated_at": "string",
+    "custom_html": "string",
+    "phone_number": "string",
+    "number_of_streams": "number"
   }
   ```
 
@@ -208,6 +218,8 @@ Planned API improvements for future releases:
 4. Advanced user role management
 5. Rate limiting implementation
 6. CORS policy refinement
+7. Advanced search filters for tributes
+8. Bulk tribute operations
 
 ## Testing
 
@@ -223,3 +235,5 @@ For additional support or to report API issues:
 1. Check the error response for detailed information
 2. Consult the development team
 3. Review WordPress plugin documentation for backend endpoints
+
+## Last Updated: 2024-02-21
