@@ -7,8 +7,7 @@
   
   // Destructure calculator data with reactive statement
   $: ({
-    cartItems,
-    cartTotal,
+    cart: { items: cartItems, total: cartTotal },
     personalDetails
   } = data.calculatorData);
 

@@ -1,6 +1,22 @@
 import type { PageServerLoad } from './$types';
+import type { CalculatorData, Package } from '$lib/types/user-metadata';
 
-const DEFAULT_CALCULATOR_DATA = {
+function createDefaultPackage(): Package {
+  return {
+    id: 'Solo',
+    name: 'Solo Package',
+    description: 'Basic memorial package',
+    basePrice: 599,
+    features: []
+  };
+}
+
+const DEFAULT_CALCULATOR_DATA: CalculatorData = {
+  meta: {
+    status: 'draft',
+    lastUpdated: new Date().toISOString(),
+    version: '2.0.0'
+  },
   scheduleDays: [{
     date: new Date().toISOString().split('T')[0],
     locations: [{
@@ -12,14 +28,23 @@ const DEFAULT_CALCULATOR_DATA = {
       notes: ""
     }]
   }],
-  cartItems: [],
-  cartTotal: 0,
-  selectedPackage: "Solo",
+  selectedPackage: createDefaultPackage(),
+  cart: {
+    items: [],
+    subtotal: 599,
+    total: 599,
+    discounts: [],
+    taxes: []
+  },
   personalDetails: {
     firstName: "",
     lastName: "",
     email: "",
-    phone: ""
+    phone: "",
+    preferences: {
+      contactMethod: 'email',
+      notifications: true
+    }
   }
 };
 

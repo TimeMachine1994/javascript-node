@@ -1,5 +1,15 @@
 import type { PageServerLoad } from './$types';
-import type { CalculatorData, UserMetadata } from '$lib/types/user-metadata';
+import type { CalculatorData, UserMetadata, Package } from '$lib/types/user-metadata';
+
+function createDefaultPackage(): Package {
+  return {
+    id: 'Solo',
+    name: 'Solo Package',
+    description: 'Basic memorial package',
+    basePrice: 599,
+    features: []
+  };
+}
 
 export const load: PageServerLoad = async ({ parent }) => {
   // Get parent data which includes userData from the root layout
@@ -7,15 +17,29 @@ export const load: PageServerLoad = async ({ parent }) => {
   
   // Default values if calculator data is not available
   const defaultCalculatorData: CalculatorData = {
+    meta: {
+      status: 'draft',
+      lastUpdated: new Date().toISOString(),
+      version: '2.0.0'
+    },
     scheduleDays: [],
-    cartItems: [],
-    cartTotal: 0,
-    selectedPackage: '',
+    selectedPackage: createDefaultPackage(),
+    cart: {
+      items: [],
+      subtotal: 0,
+      total: 0,
+      discounts: [],
+      taxes: []
+    },
     personalDetails: {
       firstName: '',
       lastName: '',
       email: '',
-      phone: ''
+      phone: '',
+      preferences: {
+        contactMethod: 'email',
+        notifications: true
+      }
     }
   };
 

@@ -46,17 +46,51 @@ export interface CartItem {
   price: number;
 }
 
-export interface CalculatorData {
-  scheduleDays: ScheduleDay[];
-  cartItems: CartItem[];
-  cartTotal: number;
-  selectedPackage: string;
-  personalDetails: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
+export interface Package {
+  id: string;
+  name: string;
+  description: string;
+  basePrice: number;
+  features: string[];
+}
+
+export interface CartData {
+  items: CartItem[];
+  subtotal: number;
+  total: number;
+  discounts: Array<{
+    code: string;
+    amount: number;
+  }>;
+  taxes: Array<{
+    name: string;
+    rate: number;
+    amount: number;
+  }>;
+}
+
+export interface PersonalDetails {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  preferences: {
+    contactMethod: 'email' | 'phone';
+    notifications: boolean;
   };
+}
+
+export interface CalculatorData {
+  meta: {
+    status: 'draft' | 'pending' | 'complete' | 'error';
+    lastUpdated: string;
+    version: string;
+    errors?: string[];
+  };
+  scheduleDays: ScheduleDay[];
+  selectedPackage: Package;
+  cart: CartData;
+  personalDetails: PersonalDetails;
 }
 
 export interface UserMetadata {
