@@ -1,54 +1,23 @@
 <script lang="ts">
-    import MemorialCalculator from '$lib/components/MemorialCalculator.svelte';
     import type { PageData } from './$types';
-    import type { OrderData } from '$lib/types/memorial-calculator';
-    import { enhance } from '$app/forms';
+    import type { WPUserData, CalculatorData, PersonalDetails } from '$lib/types/user-metadata';
+    import { enhance, type SubmitFunction } from '$app/forms';
     import { goto } from '$app/navigation';
-    import type { WPUserData } from '$lib/types/user-metadata';
     
     export let data: PageData;
 
     // Create a form with enhancement
     let form: HTMLFormElement;
 
-    function handleSubmit() {
-        return async ({ result }: { result: { type: string } }) => {
+    function handleSubmit(): SubmitFunction {
+        return async ({ result }) => {
             if (result.type === 'success') {
-                alert('Calculator data saved successfully!');
+                alert('Form data saved successfully!');
             } else {
-                alert('Failed to save calculator data. Please try again.');
+                alert('Failed to save form data. Please try again.');
             }
         };
     }
-
-    async function handleCalcSave(orderData: OrderData) {
-        const formData = new FormData();
-        formData.append('calculatorData', JSON.stringify(orderData));
-        
-        try {
-            // Submit the form
-            await form.requestSubmit();
-        } catch (error) {
-            console.error('Error in form submission:', error);
-            alert('Failed to save calculator data. Please try again.');
-        }
-    }
-
-    async function handleCheckout(orderData: OrderData) {
-        try {
-            await handleCalcSave(orderData);
-            await goto('/schedule/payment_booking');
-        } catch (error) {
-            console.error('Error during checkout:', error);
-        }
-    }
-
-    // Get preview URL from memorial form data
-    const location = data.userData[0]?.memorial_form_data?.memorial?.location || '';
-    const previewUrl = location.split('-')[1]?.trim() || '';
-    const qrCodeUrl = previewUrl ? 
-        `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(previewUrl)}` : 
-        '';
 
     // Create a mock WPUserData from memorial form data
     const wpUserData: WPUserData = {
@@ -65,6 +34,67 @@
             meta_value: JSON.stringify(data.userData[0]?.memorial_form_data || {})
         }
     };
+
+    // Get preview URL from memorial form data
+    const location = data.userData[0]?.memorial_form_data?.memorial?.location || '';
+    const previewUrl = location.split('-')[1]?.trim() || '';
+    const qrCodeUrl = previewUrl ? 
+        `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(previewUrl)}` : 
+        '';
+
+    // Create initial calculator data from form data
+    const personalDetails: PersonalDetails = {
+        firstName: data.userData[0]?.memorial_form_data?.familyMember?.name?.split(' ')[0] || '',
+        lastName: data.userData[0]?.memorial_form_data?.familyMember?.name?.split(' ')[1] || '',
+        email: data.userData[0]?.memorial_form_data?.contact?.email || '',
+        phone: data.userData[0]?.memorial_form_data?.contact?.phone || '',
+        preferences: {
+            contactMethod: 'email',
+            notifications: true
+        }
+    };
+
+    const initialCalculatorData: CalculatorData = {
+        meta: {
+            status: 'draft',
+            lastUpdated: new Date().toISOString(),
+            version: '1.0.0'
+        },
+        scheduleDays: [],
+        selectedPackage: {
+            id: '',
+            name: '',
+            description: '',
+            basePrice: 0,
+            features: []
+        },
+        cart: {
+            items: [],
+            subtotal: 0,
+            total: 0,
+            discounts: [],
+            taxes: []
+        },
+        personalDetails
+    };
+
+    // Function to navigate to calculator with data
+    async function navigateToCalculator() {
+        try {
+            // Store the necessary data in sessionStorage to avoid URL length limitations
+            sessionStorage.setItem('calculatorPrefillData', JSON.stringify({
+                userData: data.userData,
+                wpUserData,
+                calculatorData: initialCalculatorData
+            }));
+            
+            // Navigate to calculator page
+            await goto('/calc');
+        } catch (error) {
+            console.error('Error navigating to calculator:', error);
+            alert('Failed to proceed to calculator. Please try again.');
+        }
+    }
 </script>
 
 <form 
@@ -99,20 +129,11 @@
 
         <button 
             type="button"
-            onclick={() => goto('/schedule/payment_booking')}
+            on:click={navigateToCalculator}
             class="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 mb-2"
         >
             Continue to Payment
         </button>
         <p class="text-lg">To Complete The Reservation Process</p>
     </div>
-
-    <MemorialCalculator
-        data={{
-            userData: data.userData,
-            wpUserData
-        }}
-        onSave={handleCalcSave}
-        onCheckout={handleCheckout}
-    />
 </form>

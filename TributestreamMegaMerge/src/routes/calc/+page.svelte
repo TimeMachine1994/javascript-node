@@ -1,10 +1,32 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import type { CalculatorData } from '$lib/types/user-metadata';
   import MemorialCalculator from '$lib/components/MemorialCalculator.svelte';
   import { error } from '@sveltejs/kit';
+  import { onMount } from 'svelte';
 
   const props = $props();
-  const { userData, wpUserData } = props.data as PageData;
+  let userData = props.data?.userData;
+  let wpUserData = props.data?.wpUserData;
+  let calculatorData: CalculatorData | undefined;
+
+  // Try to get data from sessionStorage on mount
+  onMount(() => {
+    try {
+      const storedData = sessionStorage.getItem('calculatorPrefillData');
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        userData = parsedData.userData || userData;
+        wpUserData = parsedData.wpUserData || wpUserData;
+        calculatorData = parsedData.calculatorData;
+        
+        // Clear the session storage after retrieving the data
+        sessionStorage.removeItem('calculatorPrefillData');
+      }
+    } catch (err) {
+      console.error('Error retrieving calculator data from sessionStorage:', err);
+    }
+  });
 
   // Ensure userData and wpUserData exist before rendering calculator
   $effect(() => {
@@ -20,6 +42,7 @@
     <MemorialCalculator
       data={{ userData, wpUserData }}
       initialPackage="Solo"
+      initialData={calculatorData}
       onSave={(orderData) => {
         // Success is handled by the MemorialCalculator component
         console.log('Calculator data saved:', orderData);
