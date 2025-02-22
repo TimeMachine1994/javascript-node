@@ -1,67 +1,64 @@
 <script lang="ts">
-import { useAuth } from '$lib/hooks/useAuth';
+import { enhance } from '$app/forms';
 
-const { login } = useAuth();
+let { form } = $props();
+
+// Auto-filled credentials for demo
 let username = $state('');
 let password = $state('');
-let error = $state('');
-
-async function handleSubmit() {
-  error = '';
-  const success = await login(username, password);
-  if (success) {
-    // Redirect to home page after successful login
-    window.location.href = '/';
-  }
-}
 </script>
 
-<div class="min-h-screen bg-background flex items-center justify-center">
-  <div class="w-full max-w-md p-8 bg-card rounded-lg shadow-lg">
-    <h1 class="text-2xl font-bold text-center mb-6">Login to TributeStream</h1>
+<div class="flex min-h-screen items-center justify-center">
+  <div class="w-full max-w-md bg-white rounded-lg shadow-md p-8">
+    <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
     
-    <form on:submit|preventDefault={handleSubmit} class="space-y-4">
-      <div>
-        <label for="username" class="block text-sm font-medium text-foreground mb-1">
+    <form method="POST" use:enhance>
+      {#if form?.error}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {form.error}
+        </div>
+      {/if}
+      
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
           Username
         </label>
         <input
           id="username"
+          name="username"
           type="text"
           bind:value={username}
-          class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-          required
+          class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
-
-      <div>
-        <label for="password" class="block text-sm font-medium text-foreground mb-1">
+      
+      <div class="mb-6">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
           Password
         </label>
         <input
           id="password"
+          name="password"
           type="password"
           bind:value={password}
-          class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-          required
+          class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
-
-      {#if error}
-        <div class="text-destructive text-sm">{error}</div>
-      {/if}
-
+      
       <button
         type="submit"
-        class="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition"
+        class="w-full bg-[#D5BA7F] text-black font-bold py-2 px-4 border border-transparent rounded-lg hover:text-black hover:shadow-[0_0_10px_4px_#D5BA7F] transition-all duration-300 ease-in-out mb-4"
       >
-        Login
+        Log In
       </button>
     </form>
 
-    <div class="mt-4 text-center">
-      <a href="/register" class="text-sm text-muted-foreground hover:text-primary">
-        Don't have an account? Sign up
+    <div class="text-center mt-4">
+      <a 
+        href="/forgot-password" 
+        class="text-black hover:text-[#D5BA7F] transition-all duration-300 ease-in-out text-sm"
+      >
+        Forgot Password?
       </a>
     </div>
   </div>
