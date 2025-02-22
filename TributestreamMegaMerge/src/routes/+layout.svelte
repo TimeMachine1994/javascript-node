@@ -33,7 +33,7 @@
 {/if}
 
 <!-- Debug display -->
-<div class="bg-gray-100 p-4 text-sm">
+<div class="bg-red-100 p-4 text-sm">
   <h3 class="font-bold mb-2">Debug Info:</h3>
   <pre class="whitespace-pre-wrap">
     {JSON.stringify(data, null, 2)}
