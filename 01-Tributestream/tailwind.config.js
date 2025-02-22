@@ -35,6 +35,12 @@ export default {
           DEFAULT: '#6b7280',
           dark: '#4b5563',
           light: '#9ca3af'
+        },
+        background: 'white',
+        foreground: '#1f2937',
+        card: {
+          DEFAULT: 'white',
+          foreground: '#1f2937'
         }
       },
       borderRadius: {
