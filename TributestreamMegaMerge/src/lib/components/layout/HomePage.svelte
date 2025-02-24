@@ -9,6 +9,7 @@
     let phoneNumber = $state('');
     let emailAddress = $state('');
     let isSubmitting = $state(false);
+    let isSearching = $state(false);
 
     let slugifiedText = $derived(
         fullName
@@ -21,13 +22,23 @@
         `http://www.Tributestream.com/celebration-of-life-for-${slugifiedText}`
     );
 
-    async function handleSearch(event: Event) {
+    // Added type safety and error handling
+    async function handleSearch(event: SubmitEvent) {
         event.preventDefault();
-        if (searchQuery.trim()) {
+        if (!searchQuery.trim()) return;
+
+        try {
+            isSearching = true;
             await goto(`/search?search=${encodeURIComponent(searchQuery)}`);
+        } catch (error) {
+            console.error('Search navigation failed:', error);
+            // You might want to show an error message to the user here
+        } finally {
+            isSearching = false;
         }
     }
 
+    // Added type safety to click handlers
     function showCreate() {
         pageState = 'create';
     }
@@ -38,6 +49,16 @@
         fullName = '';
         phoneNumber = '';
         emailAddress = '';
+    }
+
+    // Added form validation
+    function isFormValid(): boolean {
+        return !!(
+            fullName.trim() &&
+            phoneNumber.trim() &&
+            emailAddress.trim() &&
+            emailAddress.includes('@')
+        );
     }
 </script>
 
@@ -74,14 +95,17 @@
         <div class="flex justify-between">
             <button
                 type="submit"
-                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                disabled={isSearching}
+                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 
+                       disabled:cursor-not-allowed transition-all duration-200"
             >
-                Search
+                {isSearching ? 'Searching...' : 'Search'}
             </button>
             <button
                 type="button"
                 on:click={showCreate}
-                class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 
+                       transition-all duration-200"
             >
                 Create
             </button>
@@ -100,7 +124,7 @@
     
     <form
         method="POST"
-        action="/create-memorial?/default"
+        action="?/create"
         use:enhance={() => {
             isSubmitting = true;
             return async ({ result }) => {
@@ -158,13 +182,14 @@
         </div>
 
         <input type="hidden" name="customLink" value={customLink} />
+        <input type="hidden" name="searchQuery" value={searchQuery} />
 
         <button
             type="submit"
             class="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600
                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                   disabled:opacity-50"
-            disabled={isSubmitting}
+                   disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            disabled={isSubmitting || !isFormValid()}
         >
             {isSubmitting ? 'Submitting...' : 'Create Memorial Page'}
         </button>
@@ -172,7 +197,8 @@
 
     <button
         on:click={backToHome}
-        class="mt-6 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+        class="mt-6 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 
+               transition-all duration-200"
     >
         Back to Home
     </button>
