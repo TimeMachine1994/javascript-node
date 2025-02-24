@@ -26,3 +26,10 @@ export interface TributeSearchResult {
     total: number;
     error?: string;
 }
+
+export interface TributeCreateRequest {
+    lovedOneName: string;
+    point_of_contact_name: string;
+    point_of_contact_email: string;
+    point_of_contact_phone: string;
+}
