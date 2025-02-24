@@ -218,7 +218,11 @@ export const actions: Actions = {
                 slug: data.slug,
                 loved_one_name: data.lovedOneName,
                 user_id: userId,
-                phone_number: data.pointOfContactPhone || '' // Add phone_number parameter
+                phone_number: data.pointOfContactPhone || '',
+                custom_html: null, // Add custom_html parameter (null by default)
+                number_of_streams: null, // Add number_of_streams parameter (null by default)
+                created_at: new Date().toISOString().slice(0, 19).replace('T', ' '), // Format: YYYY-MM-DD HH:MM:SS
+                updated_at: new Date().toISOString().slice(0, 19).replace('T', ' ') // Format: YYYY-MM-DD HH:MM:SS
             };
             console.log(`${logTime()} [API] Tribute payload:`, JSON.stringify(tributePayload, null, 2));
             
