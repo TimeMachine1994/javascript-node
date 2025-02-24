@@ -53,7 +53,10 @@
 {:else if pageState === 'create'}
     <section>
         <h1>Create Page</h1>
-        
+        <form>
+          <input>
+          
+        </form>
         <div class="mt-4">
             <p>Original Text: <strong>{searchQuery}</strong></p>
             <p>Slugified Text: <strong>{slugifiedText}</strong></p>
