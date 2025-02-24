@@ -181,8 +181,8 @@
             />
         </div>
 
-        <input type="hidden" name="customLink" value={customLink} />
-        <input type="hidden" name="searchQuery" value={searchQuery} />
+        <input type="hidden" name="slug" value={slugifiedText} />
+        <input type="hidden" name="lovedOneName" value={searchQuery} />
 
         <button
             type="submit"
