@@ -2,6 +2,7 @@
 	import '../app.css';
   	import Header from '$lib/components/layout/header.svelte';
 	import Footer from '$lib/components/layout/footer.svelte';
+	import HomePage from '$lib/components/layout/HomePage.svelte';
 	let { children } = $props();
 </script>
 
@@ -9,6 +10,7 @@
 	<Header />
 	<main class="flex-grow">
 		{@render children()}
+		<HomePage/>
 	</main>
 	<Footer />
 </div>
