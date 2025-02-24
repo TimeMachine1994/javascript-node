@@ -12,7 +12,7 @@
     let isSearching = $state(false);
 
     let slugifiedText = $derived(
-        fullName
+        searchQuery
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-+|-+$/g, '')

@@ -3,25 +3,7 @@ import type { PageServerLoad } from './$types';
 import type { Actions, RequestEvent } from '@sveltejs/kit';
 import type { TributeCreateRequest } from '$lib/types/api';
 
-// Function to generate random test data
-function generateTestData(): TributeCreateRequest {
-    const firstNames = ['John', 'Jane', 'Robert', 'Mary', 'William', 'Elizabeth'];
-    const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia'];
-    const domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'example.com'];
-    
-    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-    const domain = domains[Math.floor(Math.random() * domains.length)];
-    const timestamp = Date.now();
-    
-    return {
-        lovedOneName: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`,
-        point_of_contact_name: `${firstName} ${lastName}`,
-        point_of_contact_email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}.${timestamp}@${domain}`,
-        point_of_contact_phone: `+1${Math.floor(Math.random() * 1000000000).toString().padStart(10, '0')}`
-    };
-}
-
+ 
 function generatePassword(): string {
     const lowercase = 'abcdefghijklmnopqrstuvwxyz';
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -63,12 +45,7 @@ function validateFormData(data: TributeCreateRequest): { isValid: boolean; error
     return { isValid: true };
 }
 
-export const load: PageServerLoad = async () => {
-    return {
-        testData: generateTestData() // Provide test data for development
-    };
-};
-
+ 
 export const actions: Actions = {
     create: async ({ request, cookies, fetch }: RequestEvent) => {
         try {
@@ -76,15 +53,13 @@ export const actions: Actions = {
             
             // Get form data
             const formData = await request.formData();
-            const isTestMode = formData.get('testMode') === 'true';
-            
-            // Use test data if in test mode, otherwise use form data
-            const data: TributeCreateRequest = isTestMode ? generateTestData() : {
-                lovedOneName: formData.get('searchQuery') as string,
-                point_of_contact_name: formData.get('fullName') as string,
-                point_of_contact_phone: formData.get('phoneNumber') as string,
-                point_of_contact_email: formData.get('emailAddress') as string,
-            };
+           const data = {
+                lovedOneName: formData.get('lovedOneName') as string,
+                pointOfContactName: formData.get('pointOfContactName') as string,
+                pointOfContactEmail: formData.get('pointOfContactEmail') as string,
+                pointOfContactPhone: formData.get('pointOfContactPhone') as string,
+                tribute: formData.get('searchQuery') as string,
+             };
 
             // Validate form data
             const validation = validateFormData(data);
@@ -118,6 +93,7 @@ export const actions: Actions = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    slug:
                     username: data.point_of_contact_email,
                     email: data.point_of_contact_email,
                     password: password
