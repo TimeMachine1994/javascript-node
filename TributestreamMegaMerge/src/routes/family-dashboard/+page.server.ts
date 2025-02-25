@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import type { UserMetadata } from '$lib/types/user-metadata';
+import type { ParsedCookieData } from '$lib/types/user-store';
 
 export const load: PageServerLoad = async ({ cookies, fetch }) => {
     const token = cookies.get('jwt_token');
@@ -12,9 +13,10 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
     if (!userCookie) {
         throw error(401, 'User data not found');
     }
+    const idCookie = cookies.get('user_id');
 
-    const userData = JSON.parse(decodeURIComponent(userCookie));
-    const userId = userData.metaResult?.user_id;
+     
+    const userId: ParsedCookieData = JSON.parse(idCookie);
 
     if (!userId) {
         throw error(400, 'User ID not found in cookie data');

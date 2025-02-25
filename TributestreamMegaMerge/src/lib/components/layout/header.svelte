@@ -1,4 +1,5 @@
 <script lang="ts">
+ let button = "bg-[#D5BA7F] text-black py-2 px-4 border border-transparent rounded-lg hover:text-black hover:shadow-[0_0_10px_4px_#D5BA7F] transition-all duration-300 ease-in-out";
 
 </script>
 
@@ -35,6 +36,11 @@
             <a href="/schedule" class="text-white hover:text-gray-300">
               Schedule Now
             </a>
+          </li>
+          <li>
+            <a href="/family-dashboard" class={button}>
+              My Portal            
+              </a>
           </li>
           <li>
  
