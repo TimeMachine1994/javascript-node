@@ -28,8 +28,10 @@ export interface TributeSearchResult {
 }
 
 export interface TributeCreateRequest {
-    lovedOneName: string;
-    point_of_contact_name: string;
-    point_of_contact_email: string;
-    point_of_contact_phone: string;
+    user_id: number;
+    loved_one_name: string;
+    slug: string;
+    phone_number: string;
+    custom_html: string;  // Required by API, must be string (empty string allowed)
+    number_of_streams: number;  // Required by API, must be integer (0 allowed)
 }

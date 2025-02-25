@@ -214,16 +214,17 @@ export const actions: Actions = {
             // Create tribute
             console.log(`${logTime()} [API] Creating tribute for: ${data.lovedOneName}, slug: ${data.slug}`);
             
-            // Based on the API documentation and error messages, we're keeping only the parameters
-            // that the WordPress API endpoint accepts for tribute creation
+            // Based on the WordPress API schema requirements with correct types
             const tributePayload = {
-                slug: data.slug,
-                loved_one_name: data.lovedOneName,
                 user_id: userId,
-                phone_number: data.pointOfContactPhone || ''
+                loved_one_name: data.lovedOneName,
+                slug: data.slug,
+                phone_number: data.pointOfContactPhone || '',
+                custom_html: '',  // Optional, using empty string as default
+                number_of_streams: 0  // Optional, using 0 as default
             };
             
-            console.log(`${logTime()} [DEBUG] Using minimal payload for tribute creation to avoid API rejection`);
+            console.log(`${logTime()} [DEBUG] Using payload with correct types for WordPress API`);
             console.log(`${logTime()} [API] Tribute payload:`, JSON.stringify(tributePayload, null, 2));
             
             // Add more detailed logging for debugging
