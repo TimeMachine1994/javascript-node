@@ -1,4 +1,4 @@
-import { fail, type Actions } from '@sveltejs/kit';
+import { fail, redirect, type Actions } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 
 /**
@@ -259,10 +259,16 @@ export const actions: Actions = {
             };
             
             console.log(`${logTime()} [ACTION] create() - COMPLETED SUCCESSFULLY`);
-            console.log(`${logTime()} [RESULT] Returning:`, JSON.stringify(result, null, 2));
+            console.log(`${logTime()} [RESULT] Redirecting to tribute page`);
             console.log(`${logTime()} ========================================================`);
             
-            return result;
+            // Redirect to the newly created tribute page
+            const tributeSlug = tributeResult.slug || data.slug;
+            const redirectUrl = `/celebration-of-life-for-${tributeSlug}`;
+            console.log(`${logTime()} [REDIRECT] Redirecting to: ${redirectUrl}`);
+            
+            // Use the redirect function directly for more reliable redirects
+            return redirect(303, redirectUrl);
 
         } catch (error) {
             console.error(`${logTime()} [ERROR] Unexpected error during form submission:`, error);
@@ -277,5 +283,6 @@ export const actions: Actions = {
                 message: 'An unexpected error occurred'
             });
         }
+        
     }
 };
