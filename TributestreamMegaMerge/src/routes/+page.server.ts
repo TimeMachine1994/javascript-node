@@ -226,6 +226,10 @@ export const actions: Actions = {
             console.log(`${logTime()} [DEBUG] Using minimal payload for tribute creation to avoid API rejection`);
             console.log(`${logTime()} [API] Tribute payload:`, JSON.stringify(tributePayload, null, 2));
             
+            // Add more detailed logging for debugging
+            console.log(`${logTime()} [DEBUG] Token length for tribute creation: ${token.length}`);
+            console.log(`${logTime()} [DEBUG] Token first 10 chars: ${token.substring(0, 10)}...`);
+            
             const tributeResponse = await fetch(`/api/tributes`, {
                 method: 'POST',
                 headers: {
@@ -238,7 +242,18 @@ export const actions: Actions = {
             console.log(`${logTime()} [API] Tribute creation response status: ${tributeResponse.status}, statusText: ${tributeResponse.statusText}`);
             console.log(`${logTime()} [API] Tribute creation response headers:`, Object.fromEntries([...tributeResponse.headers.entries()]));
 
-            const tributeResult = await tributeResponse.json();
+            // Check if response can be parsed as JSON
+            const responseText = await tributeResponse.text();
+            console.log(`${logTime()} [DEBUG] Raw response text:`, responseText);
+            
+            let tributeResult;
+            try {
+                tributeResult = JSON.parse(responseText);
+                console.log(`${logTime()} [DEBUG] Parsed JSON successfully`);
+            } catch (parseError) {
+                console.error(`${logTime()} [ERROR] Failed to parse JSON response:`, parseError);
+                throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+            }
             if (!tributeResponse.ok || tributeResult.error) {
                 console.error(`${logTime()} [ERROR] Failed to create tribute:`, JSON.stringify(tributeResult, null, 2));
                 console.error(`${logTime()} [ERROR] Tribute creation error code:`, tributeResult.code || 'No error code');
@@ -272,15 +287,26 @@ export const actions: Actions = {
 
         } catch (error) {
             console.error(`${logTime()} [ERROR] Unexpected error during form submission:`, error);
-            console.error(`${logTime()} [ERROR] Error name: ${error instanceof Error ? error.name : 'Unknown'}`);
-            console.error(`${logTime()} [ERROR] Error message: ${error instanceof Error ? error.message : 'Unknown'}`);
-            console.error(`${logTime()} [ERROR] Error stack: ${error instanceof Error ? error.stack : 'No stack trace'}`);
+            
+            // Enhanced error logging
+            if (error instanceof Error) {
+                console.error(`${logTime()} [ERROR] Error name: ${error.name}`);
+                console.error(`${logTime()} [ERROR] Error message: ${error.message}`);
+                console.error(`${logTime()} [ERROR] Error stack: ${error.stack || 'No stack trace'}`);
+            } else {
+                console.error(`${logTime()} [ERROR] Non-Error object thrown:`, typeof error);
+                console.error(`${logTime()} [ERROR] Error stringified:`, JSON.stringify(error, null, 2));
+            }
+            
+            // Add a simple debug message
+            console.error(`${logTime()} [DEBUG] Check the server logs for more details about this error`);
+            
             console.error(`${logTime()} [ACTION] create() - FAILED`);
             console.error(`${logTime()} ========================================================`);
             
             return fail(500, {
                 error: true,
-                message: 'An unexpected error occurred'
+                message: error instanceof Error ? error.message : 'An unexpected error occurred'
             });
         }
         

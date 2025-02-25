@@ -1,10 +1,7 @@
 <script lang="ts">
- 
     let { data } = $props();
-    
     const { tribute } = data;
     
-
     console.log('Tribute data loaded:', tribute);
 </script>
 
@@ -12,24 +9,18 @@
 <main class="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
     <!-- Hero with gradient overlay -->
     <section
-    class="relative h-[60vh] flex items-center justify-center bg-cover bg-bottom"
-    style="background-image: url('https://wp.tributestream.com/wp-content/uploads/2019/11/candle-PEVB9JR-scaled.jpg')"
->
-    <div class="absolute inset-0 bg-gradient-to-b from-[#D5BA7F]/40 to-transparent z-10"></div>
-    <div class="container mx-auto px-4 z-20 text-center">
-        <h1 class="text-4xl md:text-6xl mb-4 text-white font-['Fanwood_Text'] italic">
-            Celebration of Life for {tribute?.loved_one_name || 'Loading...'}
-        </h1>
-    </div>
-</section>
-
+        class="relative h-[60vh] flex items-center justify-center bg-cover bg-bottom"
+        style="background-image: url('https://wp.tributestream.com/wp-content/uploads/2019/11/candle-PEVB9JR-scaled.jpg')"
+    >
+        <div class="absolute inset-0 bg-gradient-to-b from-[#D5BA7F]/40 to-transparent z-10"></div>
+        <div class="container mx-auto px-4 z-20 text-center">
+            <h1 class="text-4xl md:text-6xl mb-4 text-white font-['Fanwood_Text'] italic">
+                Celebration of Life for {tribute?.loved_one_name || 'Loading...'}
+            </h1>
+        </div>
+    </section>
 
     <!-- Video Section -->
-    <script>
-        export let data;
-        const { tribute } = data;
-    </script>
-    
     {#if tribute?.custom_html === null}
         <section class="py-16 px-4">
             <div class="container mx-auto max-w-4xl">
@@ -49,7 +40,6 @@
             {@html tribute.custom_html}
         </div>
     {/if}
-    
 
     <!-- FAQ Cards -->
     <section class="py-16 px-4 bg-black-900">

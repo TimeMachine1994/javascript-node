@@ -1,13 +1,6 @@
-export async function load({ data }) {
-    if (data?.redirect) {
-        // This should ideally not be necessary since redirect is server-handled.
-        // However, adding this as a safeguard on client-side navigation.
-        window.location.href = data.redirect;
-        return {};
-    }
-    
+export function load({ data }) {
+    // Simply pass through the data from the server
     return {
-        ...data,
-        // You can add client-side transformations here if needed.
+        tribute: data.tribute
     };
 }
