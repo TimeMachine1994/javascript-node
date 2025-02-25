@@ -204,3 +204,113 @@
     </button>
 </section>
 {/if}
+
+
+<section class="relative bg-gray-900 text-white">
+    <video autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover z-0" class:blurred={isBlurred}>
+          <source src="https://209.74.64.181:12091/down/FCymVumu4aQG.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+      </video>
+      <div class="absolute inset-0 bg-black opacity-50 z-10"></div>  
+    
+      <div class="relative z-20 flex flex-col items-center justify-start h-screen min-w-screen pt-8 font-['Fanwood_Text']">
+          <h1 class="text-4xl md:text-6xl text-center mb-4 ">
+         We Make Hearts Full Again
+          </h1> 
+     
+           <p class="text-center mb-8 text-lg md:text-xl">
+              
+              {#if !showSecondPage}
+              
+              Tributestream broadcasts high quality audio and video of your loved one's celebartion of life. <br> 
+              Enter your loved ones name below to begin your journey with Tributestream. 
+              <!--Tributestream brings together your families tesitmony of love into one neat package. <br> <i>
+              Tributestream brings closure now.<br> A window to the past, to which we all avow. <br>
+              Relearn powerful lessons time can't dim,<br>
+              and embrace the love that flows from within.
+            </i>-->
+    
+               
+              {:else}
+                  Your Loved One's Custom Link:
+              {/if}
+          </p>
+    
+          <form class="w-full max-w-md">
+              {#if !showSecondPage}
+                  <input
+                      type="text"
+                      placeholder="Loved One's Name Here"
+                      class="w-full px-4 py-2 text-gray-900 rounded-md mb-4 text-center"
+                      bind:value={lovedOneName}
+                  />
+                  <div class="flex space-x-4 justify-center">
+                      <button    on:click={handleNextPage}
+                      class="bg-[#D5BA7F] text-black font-bold py-2 px-4 border border-transparent rounded-lg hover:text-black  hover:shadow-[0_0_10px_4px_#D5BA7F] transition-all duration-300 ease-in-out">
+                          Create Tribute
+                        </button>
+                    
+    
+                        <button
+                                            on:click={() => {
+                                              handleSearch();
+                                              showSecondPage = true;
+                                            }}
+                                            class="bg-[#D5BA7F] text-black py-2 px-4 border border-transparent rounded-lg hover:text-black hover:shadow-[0_0_10px_4px_#D5BA7F] transition-all duration-300 ease-in-out">
+                        Search Streams
+                    </button> 
+                  </div>
+              {:else}
+                  <div class="flex items-center justify-center mb-4">
+                      <span class="text-white">http://www.tributestream.com/celebration-of-life-for-{#if isEditing}
+                          <input
+                              type="text"
+                              class="px-2 py-1 text-gray-900 rounded-md"
+                              bind:value={tempSlugifiedName}
+                          />
+                      {:else}
+                          <span class="text-white">{slugifiedName}</span>
+                      {/if}</span>
+                      {#if isEditing}
+                          <button class="ml-2 text-green-500" on:click={handleSaveNameChange}>
+                              <i class="fas fa-check"></i>
+                          </button>
+                          <button class="ml-2 text-red-500" on:click={handleDiscardNameChange}>
+                              <i class="fas fa-times"></i>
+                          </button>
+                      {:else}
+                          <button class="ml-2 text-white" on:click={handleEditName}>
+                              <i class="fas fa-pencil-alt"></i>
+                          </button>
+                      {/if}
+                  </div>
+                  <input
+                      type="text"
+                      placeholder="Your Name"
+                      class="w-full px-4 py-2 text-gray-900 rounded-md mb-4"
+                      bind:value={fullName}
+                  />
+                  <input
+                      type="email"
+                      placeholder="Email Address"
+                      class="w-full px-4 py-2 text-gray-900 rounded-md mb-4"
+                      bind:value={email}
+                  />
+                  <input
+                      type="tel"
+                      placeholder="Phone Number"
+                      class="w-full px-4 py-2 text-gray-900 rounded-md mb-4"
+                      bind:value={phone}
+                  />
+                  <div class="flex justify-between items-center">
+                      <button type="button" on:click={handleGoBack} class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-md">
+                          <i class="fas fa-arrow-left"></i>
+                      </button>
+                      <button type="button" on:click={handleSubmit} class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-md">
+                          Create Tribute
+                      </button>
+                  </div>
+              {/if}
+          </form>
+          </div>
+          </section>
