@@ -160,7 +160,10 @@
     }
 
     // Update initial schedule day with pre-filled data
-    if (scheduleDays[0]) {
+    // Only update the first day if we have exactly one day (initial state)
+    // This prevents overwriting newly added days
+    if (scheduleDays[0] && scheduleDays.length === 1) {
+      console.log("Updating initial day with pre-filled data");
       scheduleDays[0] = {
         date: memorialDate,
         locations: [{
@@ -233,6 +236,7 @@
   }
 
   $effect(() => {
+    console.log("Recalculating cart with days:", scheduleDays.length);
     const items: CartItem[] = [];
     let total = 0;
 
@@ -272,11 +276,30 @@
 
     cartItems = items;
     cartTotal = total;
+    console.log("Cart updated with total:", total, "for days:", scheduleDays.length);
   });
 
   // Helper functions
   function addDay() {
-    scheduleDays = [...scheduleDays, { ...DEFAULT_SCHEDULE_DAY }];
+    console.log("Adding new day, current days:", scheduleDays.length);
+    
+    // Create a completely new day object with fresh references
+    const newDay = {
+      date: new Date().toISOString().split('T')[0],
+      locations: [{
+        name: "",
+        address: "",
+        travelExceedsHour: false,
+        startTime: "09:00",
+        duration: 2,
+        notes: ""
+      }]
+    };
+    
+    // Update the state with a new array reference
+    scheduleDays = [...scheduleDays, newDay];
+    
+    console.log("Day added, new days count:", scheduleDays.length);
   }
 
   function removeDay(dayIndex: number) {
@@ -412,10 +435,11 @@
 
                 <label class="block">
                   <span class="text-sm font-medium text-gray-700">Duration (hours):</span>
-                  <input 
+                  <input
                     type="number"
                     min="1"
                     bind:value={location.duration}
+                    onchange={() => scheduleDays = [...scheduleDays]}
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                   />
                 </label>
@@ -453,11 +477,14 @@
       </div>
     {/each}
 
-    <button 
-      onclick={addDay}
+    <button
+      onclick={() => {
+        console.log("Add Another Day button clicked");
+        addDay();
+      }}
       class="w-full py-2 text-center border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary hover:text-primary"
     >
-      Add Another Day
+      Add Another Day ({scheduleDays.length})
     </button>
   </div>
 
