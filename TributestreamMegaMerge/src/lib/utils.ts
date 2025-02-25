@@ -1,54 +1,62 @@
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { cubicOut } from "svelte/easing";
+import type { TransitionConfig } from "svelte/transition";
 
-/**
- * Utility function for merging Tailwind CSS classes
- * Combines clsx for conditional class joining and tailwind-merge for proper class resolution
- */
 export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
+	return twMerge(clsx(inputs));
 }
 
-/**
- * Formats a date string to a more readable format
- */
-export function formatDate(date: string): string {
-    return new Date(date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-}
+type FlyAndScaleParams = {
+	y?: number;
+	x?: number;
+	start?: number;
+	duration?: number;
+};
 
-/**
- * Formats a time string (HH:mm) to 12-hour format
- */
-export function formatTime(time: string): string {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
-}
+export const flyAndScale = (
+	node: Element,
+	params: FlyAndScaleParams = { y: -8, x: 0, start: 0.95, duration: 150 }
+): TransitionConfig => {
+	const style = getComputedStyle(node);
+	const transform = style.transform === "none" ? "" : style.transform;
 
-/**
- * Formats a phone number to (XXX) XXX-XXXX format
- */
-export function formatPhoneNumber(phone: string): string {
-    const cleaned = phone.replace(/\D/g, '');
-    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-    if (match) {
-        return '(' + match[1] + ') ' + match[2] + '-' + match[3];
-    }
-    return phone;
-}
+	const scaleConversion = (
+		valueA: number,
+		scaleA: [number, number],
+		scaleB: [number, number]
+	) => {
+		const [minA, maxA] = scaleA;
+		const [minB, maxB] = scaleB;
 
-/**
- * Formats currency amount to USD
- */
-export function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-    }).format(amount);
-}
+		const percentage = (valueA - minA) / (maxA - minA);
+		const valueB = percentage * (maxB - minB) + minB;
+
+		return valueB;
+	};
+
+	const styleToString = (
+		style: Record<string, number | string | undefined>
+	): string => {
+		return Object.keys(style).reduce((str, key) => {
+			if (style[key] === undefined) return str;
+			return str + `${key}:${style[key]};`;
+		}, "");
+	};
+
+	return {
+		duration: params.duration ?? 200,
+		delay: 0,
+		css: (t) => {
+			const y = scaleConversion(t, [0, 1], [params.y ?? 5, 0]);
+			const x = scaleConversion(t, [0, 1], [params.x ?? 0, 0]);
+			const scale = scaleConversion(t, [0, 1], [params.start ?? 0.95, 1]);
+
+			return styleToString({
+				transform: `${transform} translate3d(${x}px, ${y}px, 0) scale(${scale})`,
+				opacity: t
+			});
+		},
+		easing: cubicOut
+	};
+};
