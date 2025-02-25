@@ -1,11 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { enhance } from '$app/forms';
-
-    /**
-     * Unified state management using Svelte 5 runes
-     * Consolidates state from all previous form implementations
-     */
+ let button = "bg-[#D5BA7F] text-black font-bold py-2 px-4 border border-transparent rounded-lg hover:text-black hover:shadow-[0_0_10px_4px_#D5BA7F] transition-all duration-300 ease-in-out";
     
     // Form state machine
     let formState = $state('initial'); // initial, editing, submitting, success
@@ -241,7 +237,7 @@
                         
                         <button
                             type="submit"
-                            class="bg-[#D5BA7F] text-black py-2 px-4 border border-transparent rounded-lg hover:text-black hover:shadow-[0_0_10px_4px_#D5BA7F] transition-all duration-300 ease-in-out"
+                            class={button}
                             disabled={isSearching || !isNameValid}
                         >
                             {isSearching ? 'Searching...' : 'Search Streams'}
@@ -374,7 +370,7 @@
                         <button 
                             type="button" 
                             on:click={handleGoBack} 
-                            class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        class={button}
                             aria-label="Go back to previous step"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -384,7 +380,7 @@
                         
                         <button 
                             type="submit" 
-                            class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class={button}
                             disabled={isSubmitting || !isFormValid}
                             aria-label="Create tribute page"
                         >
