@@ -75,3 +75,25 @@ export interface UserMeta {
     created_at: string;
     updated_at: string;
 }
+
+export interface CalculatorData {
+    package?: string;
+    livestreamDate?: string;
+    livestreamStartTime?: string;
+    allowOverrun?: boolean;
+    locations?: Array<{
+        name: string;
+        address: string;
+        travelExceedsHour: boolean;
+    }>;
+    duration?: number;
+    dates?: string[];
+}
+
+export interface FuneralHomeData {
+    name?: string;
+    address?: string;
+    directorName?: string;
+    phone?: string;
+    email?: string;
+}

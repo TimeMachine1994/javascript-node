@@ -1,13 +1,34 @@
 <script lang="ts">
+    import { createEventDispatcher } from 'svelte';
+    import type { CalculatorData, FuneralHomeData } from '$lib/types/api';
+
+    // Define props using Svelte 5 runes
+    let {
+      packageType = 'Solo',
+      livestreamDate = '',
+      allowOverrun = false,
+      locations = [{ name: '', address: '', travelExceedsHour: false }],
+      funeralHomeName = '',
+      funeralDirectorName = '',
+      duration = 2
+    } = $props();
+
+    // Create event dispatcher
+    const dispatch = createEventDispatcher<{
+      save: CalculatorData;
+      checkout: { total: number; items: Array<{name: string; price: number}> };
+    }>();
+
+    // Initialize form data with props
     let formData = $state({
-      package: 'Solo',
-      livestreamDate: '',
-      allowOverrun: false,
-      locations: [{ name: '', address: '', travelExceedsHour: false }],
-      funeralHomeName: '',
-      funeralDirectorName: '',
-      dates: [],
-      duration: 2,
+      package: packageType, // Use packageType prop for the package property
+      livestreamDate,
+      allowOverrun,
+      locations: [...locations],
+      funeralHomeName,
+      funeralDirectorName,
+      dates: [] as string[],
+      duration,
     });
   
     let locationNumDefault = $derived.by(() => {
@@ -20,10 +41,10 @@
     });
   
     let cartItems = $derived.by(() => {
-      let items = [];
+      let items: Array<{name: string; price: number}> = [];
       let total = 0;
   
-      const packageCosts = { Solo: 399, Anywhere: 799, Legacy: 1499 };
+      const packageCosts: Record<string, number> = { Solo: 399, Anywhere: 799, Legacy: 1499 };
       items.push({ name: `${formData.package} Package`, price: packageCosts[formData.package] });
       total += packageCosts[formData.package];
   
@@ -52,8 +73,25 @@
       formData.locations.push({ name: '', address: '', travelExceedsHour: false });
     }
   
-    function removeLocation(index) {
+    function removeLocation(index: number) {
       formData.locations.splice(index, 1);
+    }
+
+    function saveAndPayLater() {
+      const calculatorData: CalculatorData = {
+        package: formData.package,
+        livestreamDate: formData.livestreamDate,
+        allowOverrun: formData.allowOverrun,
+        locations: formData.locations,
+        duration: formData.duration,
+        dates: formData.dates
+      };
+      dispatch('save', calculatorData);
+    }
+
+    function saveAndCheckout() {
+      saveAndPayLater();
+      dispatch('checkout', cartItems);
     }
   </script>
   
@@ -169,14 +207,14 @@
       <button
         type="button"
         class="w-full bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-800"
-        onclick={() => console.log('Save and Pay Later')}
+        onclick={saveAndPayLater}
       >
         Save and Pay Later
       </button>
       <button
         type="button"
         class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-        onclick={() => console.log('Save and Pay Now')}
+        onclick={saveAndCheckout}
       >
         Save and Checkout Now
       </button>
