@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { page } from '$app/stores';
-    import { goto } from '$app/navigation';
+      import { goto } from '$app/navigation';
     import type { PageData } from './$types';
     import type { CalculatorData, MemorialFormData, Location, CartItem, MetaEntry } from '$lib/types/user-metadata';
     
@@ -88,25 +87,25 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
                 class="bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
-                on:click={() => goto('/schedule/upload_media')}
+                onclick={() => goto('/schedule/upload_media')}
             >
                 Upload Media
             </button>
             <button
                 class="bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
-                on:click={() => goto('/calc')}
+                onclick={() => goto('/booking-calculator')}
             >
                 Edit Schedule
             </button>
             <button
                 class="bg-pink-100 hover:bg-pink-200 text-pink-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
-                on:click={() => goto('/schedule/poctransfer')}
+                onclick={() => goto('/schedule/poctransfer')}
             >
                 Transfer POC
             </button>
             <button
                 class="bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
-                on:click={() => goto('/schedule/media_invite')}
+                onclick={() => goto('/schedule/media_invite')}
             >
                 Invite Contributors
             </button>
@@ -118,7 +117,7 @@
                 <h3 class="text-xl font-bold text-gray-700">Current Livestream Schedule</h3>
                 <button
                     class="bg-red-100 text-red-800 py-1 px-3 rounded shadow font-semibold"
-                    on:click={() => goto('/calc')}
+                    onclick={() => goto('/calc')}
                 >
                     Edit
                 </button>
@@ -153,12 +152,13 @@
     {:else}
         <div class="text-center py-8">
             <p class="text-gray-600">No schedule information found. Please complete the memorial calculator first.</p>
+            <a href="/booking-calculator">
+
             <button
                 class="mt-4 bg-primary text-white py-2 px-4 rounded shadow hover:bg-primary/90"
-                on:click={() => goto('/calc')}
-            >
+             >
                 Go to Calculator
-            </button>
+            </button></a>
         </div>
     {/if}
 </div>
