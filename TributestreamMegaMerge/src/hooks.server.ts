@@ -92,7 +92,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		// Verify they are an administrator
 		if (!userData.isAdmin) {
 			console.log('🚫 [Hook] User is not an admin, redirecting to /dashboard');
-			throw redirect(303, '/dashboard');
+			throw redirect(303, '/family-dashboard');
 		}
 
 		console.log('✅ [Hook] Admin access granted');

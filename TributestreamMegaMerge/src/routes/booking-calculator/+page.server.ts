@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ fetch, cookies }: { fetch: typeof g
          throw error(400, 'user_id is required as a query parameter.');
     }
 
-    const token = cookies.get('jwt');
+    const token = cookies.get('jwt_token');
     if (!token) {
         console.error('❌ Missing JWT token in cookies.');
          throw error(401, 'Authentication required');

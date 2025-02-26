@@ -267,11 +267,29 @@
             </div>
 
             <!-- Save and Pay Buttons -->
-            <div class="mt-6 flex flex-col gap-4">
+            <form method="POST" class="mt-6 flex flex-col gap-4">
+                <input type="hidden" name="calculatorData" value={JSON.stringify({
+                    meta: {
+                        status: 'draft',
+                        lastUpdated: new Date().toISOString(),
+                        version: '1.0'
+                    },
+                    cartItems: cartItems.items,
+                    total: cartItems.total,
+                    duration: formData.duration,
+                    livestreamDate: formData.livestreamDate,
+                    livestreamStartTime: formData.livestreamStartTime,
+                    locations: formData.locations,
+                    funeralHome: {
+                        name: formData.funeralHomeName,
+                        directorName: formData.funeralDirectorName
+                    }
+                })} />
+
                 <button
-                    type="button"
+                    formaction="?/savePayLater"
                     class="w-full bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-800"
-                    onclick={async () => {
+                    onclick={() => {
                         masterStore.updateOrderData({
                             details: {
                                 cartItems: cartItems.items,
@@ -282,29 +300,13 @@
                                 locations: formData.locations
                             }
                         });
-
-                        // Call logout endpoint
-                        const response = await fetch('/api/logout', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        });
-
-                        if (response.ok) {
-                            // Clear store
-                            masterStore.clear();
-                            // Redirect to fd-form
-                            window.location.href = '/fd-form';
-                        } else {
-                            console.error('Failed to logout');
-                        }
                     }}
                 >
                     Save and Pay Later
                 </button>
+
                 <button
-                    type="button"
+                    formaction="?/savePayNow"
                     class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
                     onclick={() => {
                         masterStore.updateOrderData({
@@ -317,12 +319,11 @@
                                 locations: formData.locations
                             }
                         });
-                        console.log('Proceeding to checkout');
                     }}
                 >
                     Save and Checkout Now
                 </button>
-            </div>
+            </form>
         </div>
     </div>
 </div>
