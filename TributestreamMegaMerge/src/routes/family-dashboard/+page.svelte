@@ -1,5 +1,4 @@
 <script lang="ts">
-      import { goto } from '$app/navigation';
     import type { PageData } from './$types';
     import type { CalculatorData, MemorialFormData, Location, CartItem, MetaEntry } from '$lib/types/user-metadata';
     
@@ -84,42 +83,42 @@
 
         <!-- Action Buttons -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <button
+            <a
+                href="/schedule/upload_media"
                 class="bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
-                onclick={() => goto('/schedule/upload_media')}
             >
                 Upload Media
-            </button>
-            <button
+            </a>
+            <a
+                href="/booking-calculator"
                 class="bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
-                onclick={() => goto('/booking-calculator')}
             >
                 Edit Schedule
-            </button>
-            <button
+            </a>
+            <a
+                href="/schedule/poctransfer"
                 class="bg-pink-100 hover:bg-pink-200 text-pink-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
-                onclick={() => goto('/schedule/poctransfer')}
             >
                 Transfer POC
-            </button>
-            <button
+            </a>
+            <a
+                href="/schedule/media_invite"
                 class="bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
-                onclick={() => goto('/schedule/media_invite')}
             >
                 Invite Contributors
-            </button>
+            </a>
         </div>
 
         <!-- Current Livestream Schedule Section -->
         <div class="bg-white rounded-lg shadow p-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xl font-bold text-gray-700">Current Livestream Schedule</h3>
-                <button
+                <a
+                    href="/calc"
                     class="bg-red-100 text-red-800 py-1 px-3 rounded shadow font-semibold"
-                    onclick={() => goto('/calc')}
                 >
                     Edit
-                </button>
+                </a>
             </div>
             
             {#if calculatorData?.scheduleDays}

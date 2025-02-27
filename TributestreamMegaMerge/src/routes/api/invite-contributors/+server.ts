@@ -1,6 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import type { InviteRequest, InviteResponse } from '../../schedule/media_invite/types';
+import type { InviteRequest, InviteResponse } from '../../family-dashboard/media_invite/types';
 
 export const POST: RequestHandler = async ({ request }) => {
     console.log('🚀 [API] Contributor invitation request received');

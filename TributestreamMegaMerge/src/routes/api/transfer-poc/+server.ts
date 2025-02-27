@@ -1,6 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import type { TransferPocRequest } from '../../schedule/poctransfer/types';
+import type { TransferPocRequest } from '../../family-dashboard/poctransfer/types';
 
 export const POST: RequestHandler = async ({ request }) => {
     console.log('🚀 [API] POC transfer request received');

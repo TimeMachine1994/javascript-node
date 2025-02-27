@@ -23,17 +23,17 @@
             </a>
           </li>
           <li>
-            <a href="/how-it-works" class="text-white hover:text-gray-300">
+            <a href="/how-does-it-work" class="text-white hover:text-gray-300">
               How does it work?
             </a>
           </li>
           <li>
-            <a href="/contact" class="text-white hover:text-gray-300">
+            <a href="/contact-us" class="text-white hover:text-gray-300">
               Contact Us
             </a>
           </li>
           <li>
-            <a href="/schedule" class="text-white hover:text-gray-300">
+            <a href="/schedule-now" class="text-white hover:text-gray-300">
               Schedule Now
             </a>
           </li>

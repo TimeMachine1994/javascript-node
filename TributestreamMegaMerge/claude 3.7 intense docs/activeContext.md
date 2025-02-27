@@ -1,10 +1,10 @@
 # Active Context
 
-*Last updated: February 25, 2025*
+*Last updated: February 26, 2025*
 
 ## Current Focus
 
-The current development focus is on refining the family dashboard experience and improving the memorial creation workflow. We are working on enhancing the user interface for managing memorial details, streamlining the payment process, and adding new features for media management.
+The current development focus is on refining the family dashboard experience, improving the memorial creation workflow, and enhancing the public-facing pages of the website. We are working on enhancing the user interface for managing memorial details, streamlining the payment process, and adding new features for media management.
 
 ### Key Issues Being Addressed
 
@@ -23,7 +23,12 @@ The current development focus is on refining the family dashboard experience and
    - Adding validation to ensure data quality
    - Improving the customization options for memorial URLs
 
-4. **Performance Optimization**
+4. **Public-Facing Pages Enhancement**
+   - Creating informative and engaging pages about the service
+   - Implementing contact and scheduling forms
+   - Ensuring responsive design across all devices
+
+5. **Performance Optimization**
    - Identifying and resolving performance bottlenecks
    - Implementing lazy loading for improved initial load times
    - Optimizing API calls to reduce latency
@@ -47,6 +52,17 @@ The current development focus is on refining the family dashboard experience and
    - Implemented reactive state using Svelte 5 runes
    - Improved data flow between components
 
+4. **New Shared Components**
+   - Created reusable components for testimonials, videos, photos, and articles
+   - Implemented form components for contact and scheduling
+   - Added FAQ component with accordion functionality
+
+5. **New Public Pages**
+   - Implemented "Why TributeStream" page with value proposition and benefits
+   - Created "How Does It Work" page with process explanation
+   - Added "Contact Us" page with contact form and information
+   - Implemented "Schedule Now" page with scheduling form and package selection
+
 ### Backend
 
 1. **WordPress API Extensions**
@@ -59,6 +75,11 @@ The current development focus is on refining the family dashboard experience and
    - Added role-based access control
    - Enhanced security measures
 
+3. **Form Handling**
+   - Implemented server-side form validation and processing
+   - Added error handling for form submissions
+   - Created simulated API responses for development
+
 ## Active Files
 
 ### Core Application Files
@@ -68,6 +89,26 @@ The current development focus is on refining the family dashboard experience and
 - `src/lib/components/layout/HomePage.svelte` - Homepage component
 - `src/lib/states/user.state.ts` - User state management
 - `src/lib/state/tribute-search.state.ts` - Tribute search functionality
+
+### Shared Component Files
+
+- `src/lib/components/shared/TestimonialCard.svelte` - Testimonial display component
+- `src/lib/components/shared/VideoPlayer.svelte` - Video player component
+- `src/lib/components/shared/PhotoGallery.svelte` - Photo gallery component
+- `src/lib/components/shared/ArticleSection.svelte` - Article content component
+- `src/lib/components/shared/FAQ.svelte` - FAQ accordion component
+- `src/lib/components/shared/ContactForm.svelte` - Contact form component
+- `src/lib/components/shared/ScheduleForm.svelte` - Scheduling form component
+- `src/lib/components/shared/index.ts` - Shared components export file
+
+### Public Pages Files
+
+- `src/routes/why-tributestream/+page.svelte` - Why TributeStream page
+- `src/routes/how-does-it-work/+page.svelte` - How Does It Work page
+- `src/routes/contact-us/+page.svelte` - Contact Us page
+- `src/routes/contact-us/+page.server.ts` - Contact form server handler
+- `src/routes/schedule-now/+page.svelte` - Schedule Now page
+- `src/routes/schedule-now/+page.server.ts` - Schedule form server handler
 
 ### Family Dashboard Files
 
@@ -106,7 +147,12 @@ The current development focus is on refining the family dashboard experience and
    - Improve the URL customization interface
    - Add preview functionality
 
-4. **Documentation Updates**
+4. **Implement Media Management System**
+   - Create media upload components
+   - Develop media organization interface
+   - Integrate with memorial pages
+
+5. **Documentation Updates**
    - Update technical documentation
    - Create user guides for new features
    - Document API changes for frontend developers
