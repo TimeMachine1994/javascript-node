@@ -89,7 +89,7 @@
             }));
             
             // Navigate to calculator page
-            await goto('/calc');
+            await goto('/booking-calculator');
         } catch (error) {
             console.error('Error navigating to calculator:', error);
             alert('Failed to proceed to calculator. Please try again.');

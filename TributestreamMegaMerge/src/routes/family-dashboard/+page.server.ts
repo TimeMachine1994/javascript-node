@@ -5,6 +5,7 @@ import { error, redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ cookies, fetch }) => {
     console.log('[Load Start] - PageServerLoad initiated');
+    let redirectUrl = '';
 
     // (For debugging only: log all cookie names)
     console.log('[Cookies] - Available cookie names:', Object.keys(cookies.getAll ? cookies.getAll() : {}));
@@ -56,18 +57,38 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
         }
         const metaData: UserMetadata = await response.json();
         console.log('[Metadata Fetch] - User metadata received:', metaData);
-        let redirectUrl = '';
-        // Check calculator status from metadata
-        if (metaData?.calculator_data?.meta?.status) {
-            console.log('[Calculator Status] - Status found:', metaData.calculator_data.meta.status);
-            switch (metaData.calculator_data.meta.status) {
+        
+        // Parse meta array into object for easier access
+        const metaObject: Record<string, string> = {};
+        if (metaData?.meta && Array.isArray(metaData.meta)) {
+            metaData.meta.forEach((item: { meta_key: string; meta_value: string }) => {
+                metaObject[item.meta_key] = item.meta_value;
+            });
+        }
+        
+        // Parse calculator_data string to object if it exists
+        let calculatorData = null;
+        
+        try {
+            if (metaObject.calculator_data) {
+                calculatorData = JSON.parse(metaObject.calculator_data as string);
+                console.log('[Calculator Data] - Parsed calculator data:', calculatorData);
+            }
+        } catch (error) {
+            console.error('[Parse Error] - Failed to parse calculator data:', error);
+        }
+        
+        // Check calculator status from parsed data
+        if (calculatorData?.meta?.status) {
+            console.log('[Calculator Status] - Status found:', calculatorData.meta.status);
+            switch (calculatorData.meta.status) {
                 case 'draft':
                     console.log('[Redirect] - Status is draft, redirecting to /booking-calculator');
-                    redirectUrl = '/booking-calculator';
+                    redirectUrl = '/family-dashboard';
                     break;
                 case 'pending':
                     console.log('[Redirect] - Status is pending, redirecting to /booking-calculator');
-                    redirectUrl = '/booking-calculator';
+                    redirectUrl = '/family-dashboard';
                     break;
                 case 'error':
                     console.log('[Redirect] - Status is error, redirecting to /booking-calculator?error=true');
@@ -77,23 +98,24 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
                     console.log('[Status] - Status is complete, continuing to family dashboard');
                     break;
                 default:
-                    console.warn('[Calculator Status Warning] - Unknown status encountered:', metaData.calculator_data.meta.status);
+                    console.warn('[Calculator Status Warning] - Unknown status encountered:', calculatorData.meta.status);
                     redirectUrl = '/booking-calculator';
                     break;
             }
         } else {
-            console.log('[Calculator Status] - No calculator data found, redirecting to /booking-calculator');
+            console.log('[Calculator Status] - No meta.status found in calculator data, redirecting to /booking-calculator');
             redirectUrl = '/booking-calculator';
         }
 
-        throw redirect(303, redirectUrl);
 
 
         // Optionally, parse user meta from the user cookie if needed later
         let userMeta;
         try {
-            userMeta = JSON.parse(userCookie);
-            console.log('[User Meta] - Parsed userMeta:', userMeta);
+            if (typeof userCookie === 'string') {
+                userMeta = JSON.parse(userCookie);
+                console.log('[User Meta] - Parsed userMeta:', userMeta);
+            }
         } catch (err) {
             console.error('[User Meta Error] - Failed to parse userMeta from cookie:', err);
         }
@@ -108,5 +130,6 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
         console.error('[Load Error] - Error in schedule page load:', err);
         throw error(500, 'Failed to load schedule data');
     }
-    
+            throw redirect(303, redirectUrl);
+
 };

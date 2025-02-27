@@ -35,7 +35,6 @@
 </script>
 
 <div class="max-w-4xl mx-auto space-y-6 p-4">
-    {#if calculatorData && memorialFormData}
         <!-- Card: Payment Status and Event Overview -->
         <div class="bg-white rounded-lg shadow p-6 space-y-4">
             <!-- Payment Status Bar -->
@@ -55,11 +54,11 @@
                 <div class="md:flex-1 space-y-4 mb-4 md:mb-0">
                     <!-- Title of the Event -->
                     <h2 class="text-2xl font-bold text-gray-700">
-                        Celebration of life for {memorialFormData.deceased.name}
+                        Celebration of life for {memorialFormData?.deceased?.name || 'Memorial Service'}
                     </h2>
 
-                    <!-- Starting Location -->
-                    {#if calculatorData.scheduleDays?.[0]?.locations?.[0]}
+                    {#if calculatorData?.scheduleDays?.[0]?.locations?.[0]}
+                        <!-- Starting Location -->
                         <div>
                             <h3 class="text-sm font-semibold text-gray-600">Starting Location</h3>
                             <p class="text-gray-800">{calculatorData.scheduleDays[0].locations[0].name}</p>
@@ -123,33 +122,37 @@
                 </button>
             </div>
             
-            <!-- Schedule Table -->
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="text-left text-gray-600">
-                        <tr class="border-b">
-                            <th class="pb-2">Date</th>
-                            <th class="pb-2">Start Time</th>
-                            <th class="pb-2">Location</th>
-                            <th class="pb-2">Duration</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each calculatorData.scheduleDays as day}
-                            {#each day.locations as location}
-                                <tr class="border-b">
-                                    <td class="py-2">{day.date}</td>
-                                    <td>{location.startTime}</td>
-                                    <td>{location.name}<br>{location.address}</td>
-                                    <td>{location.duration} hours</td>
-                                </tr>
+            {#if calculatorData?.scheduleDays}
+                <!-- Schedule Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="text-left text-gray-600">
+                            <tr class="border-b">
+                                <th class="pb-2">Date</th>
+                                <th class="pb-2">Start Time</th>
+                                <th class="pb-2">Location</th>
+                                <th class="pb-2">Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#each calculatorData.scheduleDays as day}
+                                {#each day.locations as location}
+                                    <tr class="border-b">
+                                        <td class="py-2">{day.date}</td>
+                                        <td>{location.startTime}</td>
+                                        <td>{location.name}<br>{location.address}</td>
+                                        <td>{location.duration} hours</td>
+                                    </tr>
+                                {/each}
                             {/each}
-                        {/each}
-                    </tbody>
-                </table>
-            </div>
+                        </tbody>
+                    </table>
+                </div>
+            {:else}
+                <p class="text-gray-600 text-center">No schedule information available.</p>
+            {/if}
         </div>
-    {:else}
+  
         <div class="text-center py-8">
             <p class="text-gray-600">No schedule information found. Please complete the memorial calculator first.</p>
             <a href="/booking-calculator">
@@ -160,5 +163,4 @@
                 Go to Calculator
             </button></a>
         </div>
-    {/if}
 </div>

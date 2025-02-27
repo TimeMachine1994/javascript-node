@@ -270,7 +270,7 @@
             <form method="POST" class="mt-6 flex flex-col gap-4">
                 <input type="hidden" name="calculatorData" value={JSON.stringify({
                     meta: {
-                        status: 'draft',
+                        // Status will be set by server action depending on which button is clicked
                         lastUpdated: new Date().toISOString(),
                         version: '1.0'
                     },
@@ -280,6 +280,7 @@
                     livestreamDate: formData.livestreamDate,
                     livestreamStartTime: formData.livestreamStartTime,
                     locations: formData.locations,
+                    selectedPackage: formData.package,
                     funeralHome: {
                         name: formData.funeralHomeName,
                         directorName: formData.funeralDirectorName

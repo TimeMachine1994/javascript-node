@@ -104,23 +104,36 @@ export const actions = {
 
         try {
             const formData = await request.formData();
-            const rawPaymentData = {
-                amount: formData.get('amount'),
-                package: formData.get('package'),
-                date: formData.get('date'),
-                time: formData.get('time'),
-                location: formData.get('location')
-            };
-
-            const requiredFields: (keyof PaymentFormData)[] = ['amount', 'package', 'date', 'time', 'location'];
+            const calculatorDataStr = formData.get('calculatorData');
             
-            if (!validateFormData<PaymentFormData>(rawPaymentData, requiredFields)) {
+            if (!calculatorDataStr) {
+                console.error('Missing calculatorData in form submission');
                 return fail(400, {
-                    error: `Missing or invalid required fields: ${requiredFields.join(', ')}`
+                    error: 'Missing calculator data'
                 });
             }
 
-            const paymentData = rawPaymentData as PaymentFormData;
+            // Parse the JSON calculator data
+            const calculatorData = JSON.parse(calculatorDataStr.toString());
+            console.log('Parsed calculator data:', calculatorData);
+            
+            // Add status to the meta object to support family dashboard checks
+            const dataWithStatus = {
+                ...calculatorData,
+                meta: {
+                    ...calculatorData.meta,
+                    status: 'pending' // Set status for checkout flow
+                }
+            };
+
+            // Extract fields from calculatorData for legacy meta fields
+            const paymentData = {
+                amount: calculatorData.total?.toString() || '0',
+                package: calculatorData.selectedPackage || '',
+                date: calculatorData.livestreamDate || '',
+                time: calculatorData.livestreamStartTime || '',
+                location: calculatorData.locations?.[0]?.name || ''
+            };
 
             // Update user metadata with payment information
             const response = await fetch(`https://wp.tributestream.com/wp-json/tributestream/v1/user-meta/${user_id}`, {
@@ -131,6 +144,12 @@ export const actions = {
                 },
                 body: JSON.stringify({
                     meta: [
+                        // Store the full calculator data with status
+                        {
+                            meta_key: 'calculator_data',
+                            meta_value: JSON.stringify(dataWithStatus)
+                        },
+                        // Keep legacy fields for backward compatibility
                         { meta_key: 'payment_status', meta_value: 'paid' },
                         { meta_key: 'payment_amount', meta_value: paymentData.amount },
                         { meta_key: 'selected_package', meta_value: paymentData.package },
@@ -148,6 +167,7 @@ export const actions = {
                 });
             }
 
+            console.log('Successfully saved payment data with status');
            
         } catch (err) {
             console.error('Error in savePayNow action:', err);
@@ -172,22 +192,35 @@ export const actions = {
 
         try {
             const formData = await request.formData();
-            const rawBookingData = {
-                package: formData.get('package'),
-                date: formData.get('date'),
-                time: formData.get('time'),
-                location: formData.get('location')
-            };
-
-            const requiredFields: (keyof BookingFormData)[] = ['package', 'date', 'time', 'location'];
+            const calculatorDataStr = formData.get('calculatorData');
             
-            if (!validateFormData<BookingFormData>(rawBookingData, requiredFields)) {
+            if (!calculatorDataStr) {
+                console.error('Missing calculatorData in form submission');
                 return fail(400, {
-                    error: `Missing or invalid required fields: ${requiredFields.join(', ')}`
+                    error: 'Missing calculator data'
                 });
             }
 
-            const bookingData = rawBookingData as BookingFormData;
+            // Parse the JSON calculator data
+            const calculatorData = JSON.parse(calculatorDataStr.toString());
+            console.log('Parsed calculator data:', calculatorData);
+            
+            // Add status to the meta object to support family dashboard checks
+            const dataWithStatus = {
+                ...calculatorData,
+                meta: {
+                    ...calculatorData.meta,
+                    status: 'draft' // Set status for draft flow
+                }
+            };
+
+            // Extract fields from calculatorData for legacy meta fields
+            const bookingData = {
+                package: calculatorData.selectedPackage || '',
+                date: calculatorData.livestreamDate || '',
+                time: calculatorData.livestreamStartTime || '',
+                location: calculatorData.locations?.[0]?.name || ''
+            };
 
             // Update user metadata with booking information
             const response = await fetch(`https://wp.tributestream.com/wp-json/tributestream/v1/user-meta/${user_id}`, {
@@ -198,6 +231,12 @@ export const actions = {
                 },
                 body: JSON.stringify({
                     meta: [
+                        // Store the full calculator data with status
+                        {
+                            meta_key: 'calculator_data',
+                            meta_value: JSON.stringify(dataWithStatus)
+                        },
+                        // Keep legacy fields for backward compatibility
                         { meta_key: 'payment_status', meta_value: 'pending' },
                         { meta_key: 'selected_package', meta_value: bookingData.package },
                         { meta_key: 'booking_date', meta_value: bookingData.date },
@@ -214,13 +253,16 @@ export const actions = {
                 });
             }
 
+            console.log('Successfully saved booking data with status');
+            
          } catch (err) {
             console.error('Error in savePayLater action:', err);
             return fail(500, {
                 error: 'Internal server error while saving booking'
             });
-        }
-        throw redirect(303, '/family-dashboard');
+        
+        
+        }        throw redirect(303, '/family-dashboard');
 
     }
 } satisfies Actions;

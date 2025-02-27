@@ -39,6 +39,7 @@
 		"@sendgrid/mail": "^8.1.4",
 		"@tailwindcss/vite": "^4.0.8",
 		"class-variance-authority": "^0.7.1",
-		"lucide-svelte": "^0.476.0"
+		"lucide-svelte": "^0.476.0",
+		"puppeteer": "^24.3.0"
 	}
 }
