@@ -153,14 +153,5 @@
             {/if}
         </div>
   
-        <div class="text-center py-8">
-            <p class="text-gray-600">No schedule information found. Please complete the memorial calculator first.</p>
-            <a href="/booking-calculator">
-<!-- MAKE THIS A FORM ACTION? OR ON LOAD... MAKE IT ON LOAD.... REDIRECT...-->
-            <button
-                class="mt-4 bg-primary text-white py-2 px-4 rounded shadow hover:bg-primary/90"
-             >
-                Go to Calculator
-            </button></a>
-        </div>
-</div>
+   
+ </div>
