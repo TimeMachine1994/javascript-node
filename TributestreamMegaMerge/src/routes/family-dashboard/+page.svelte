@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { PageData } from './$types';
     import type { CalculatorData, MemorialFormData, Location, CartItem, MetaEntry } from '$lib/types/user-metadata';
+    import { goto } from '$app/navigation';
     
     let { data } = $props<{ data: PageData }>();
     
@@ -31,6 +32,11 @@
             console.log('Memorial form data:', memorialFormData);
         }
     });
+
+    // Navigation functions
+    function navigateTo(path: string) {
+        goto(path);
+    }
 </script>
 
 <div class="max-w-4xl mx-auto space-y-6 p-4">
@@ -83,42 +89,42 @@
 
         <!-- Action Buttons -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <a
-                href="/schedule/upload_media"
+            <button
+                onclick={() => navigateTo('/family-dashboard/upload_media')}
                 class="bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
             >
                 Upload Media
-            </a>
-            <a
-                href="/booking-calculator"
+            </button>
+            <button
+                onclick={() => navigateTo('/booking-calculator')}
                 class="bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
             >
                 Edit Schedule
-            </a>
-            <a
-                href="/schedule/poctransfer"
+            </button>
+            <button
+                onclick={() => navigateTo('/family-dashboard/poctransfer')}
                 class="bg-pink-100 hover:bg-pink-200 text-pink-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
             >
                 Transfer POC
-            </a>
-            <a
-                href="/schedule/media_invite"
+            </button>
+            <button
+                onclick={() => navigateTo('/family-dashboard/media_invite')}
                 class="bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-4 rounded shadow text-center font-semibold transform hover:scale-105 transition-all duration-200"
             >
                 Invite Contributors
-            </a>
+            </button>
         </div>
 
         <!-- Current Livestream Schedule Section -->
         <div class="bg-white rounded-lg shadow p-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xl font-bold text-gray-700">Current Livestream Schedule</h3>
-                <a
-                    href="/calc"
+                <button
+                    onclick={() => navigateTo('/calc')}
                     class="bg-red-100 text-red-800 py-1 px-3 rounded shadow font-semibold"
                 >
                     Edit
-                </a>
+                </button>
             </div>
             
             {#if calculatorData?.scheduleDays}

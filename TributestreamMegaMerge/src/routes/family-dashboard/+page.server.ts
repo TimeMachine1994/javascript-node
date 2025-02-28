@@ -84,11 +84,11 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
             switch (calculatorData.meta.status) {
                 case 'draft':
                     console.log('[Redirect] - Status is draft, redirecting to /booking-calculator');
-                    redirectUrl = '/family-dashboard';
+                    redirectUrl = '/booking-calculator';
                     break;
                 case 'pending':
                     console.log('[Redirect] - Status is pending, redirecting to /booking-calculator');
-                    redirectUrl = '/family-dashboard';
+                    redirectUrl = '/booking-calculator';
                     break;
                 case 'error':
                     console.log('[Redirect] - Status is error, redirecting to /booking-calculator?error=true');
@@ -130,6 +130,15 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
         console.error('[Load Error] - Error in schedule page load:', err);
         throw error(500, 'Failed to load schedule data');
     }
-            throw redirect(303, redirectUrl);
+    
+    // Only perform redirects from the main dashboard page
+    // This prevents redirect loops and allows subpages to load properly
+    const currentPath = '/family-dashboard';
+    
+    // Handle redirects outside of try/catch block
+    if (redirectUrl && redirectUrl !== currentPath) {
+        console.log('[Redirect] - Redirecting to:', redirectUrl);
+        throw redirect(303, redirectUrl);
+    }
 
 };
