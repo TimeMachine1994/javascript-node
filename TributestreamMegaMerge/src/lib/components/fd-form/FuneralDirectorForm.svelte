@@ -4,6 +4,7 @@
   import FormField from '$lib/components/forms/FormField.svelte';
   import { slugify } from '$lib/utils/slugify';
   import { validateRequired, validateEmail, validatePhone, validateObject } from '$lib/utils/validators';
+  import { tributeDataStore } from '$lib/stores/tribute-data';
   
   // Component state
   let formState = $state('editing'); // editing, generating, success
@@ -115,40 +116,38 @@
       // Change state to generating link
       formState = 'generating';
       
-      // Prepare form data
-      const formData = {
-        deceased: {
-          fullName: deceasedFullName,
-          dateOfBirth,
-          dateOfPassing
-        },
-        service: {
-          date: serviceDate,
-          time: serviceTime,
-          location: serviceLocation,
-          address: serviceAddress,
-          city: serviceCity,
-          state: serviceState,
-          zipCode: serviceZipCode,
-          duration: serviceDuration
-        },
-        director: {
-          name: directorName,
-          funeralHome,
-          email: directorEmail,
-          phone: directorPhone
-        },
-        paymentChoice,
-        slug: slugifiedName
-      };
+      // Convert payment choice to the format expected by the store
+      const storePaymentMethod = paymentChoice === 'now' ? 'credit_card' :
+                                paymentChoice === 'later' ? 'invoice' : null;
+                                
+      // Save data to the tribute data store for cross-component data sharing
+      tributeDataStore.importFromFDForm({
+        deceasedName: deceasedFullName,
+        dateOfBirth,
+        dateOfPassing,
+        serviceDate,
+        serviceTime,
+        serviceLocation,
+        serviceAddress,
+        serviceCity,
+        serviceState,
+        serviceZipCode,
+        serviceDuration,
+        directorName,
+        funeralHome,
+        directorEmail,
+        directorPhone,
+        paymentChoice: storePaymentMethod
+      });
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      console.log('Form data submitted:', formData);
+      // Get the slug from the tribute data store
+      const slug = tributeDataStore.getSlug();
       
       // Save generated link
-      generatedLink = customLink;
+      generatedLink = `http://www.tributestream.com/celebration-of-life-for-${slug}`;
       
       // Update state to success
       formState = 'success';
@@ -168,10 +167,13 @@
   
   // Handle proceeding to next step based on payment choice
   function handleProceedToNextStep() {
+    // Get the slug from the tribute data store
+    const slug = tributeDataStore.getSlug();
+    
     if (paymentChoice === 'now') {
-      goto('/booking-calculator?source=fd-form&tributeId=new&slug=' + slugifiedName);
+      goto('/booking-calculator?source=fd-form&tributeId=new&slug=' + slug);
     } else {
-      goto('/fd-form/confirmation?slug=' + slugifiedName);
+      goto('/fd-form/confirmation?slug=' + slug);
     }
   }
 </script>

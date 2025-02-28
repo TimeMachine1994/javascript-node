@@ -2,7 +2,9 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { calculatorStore, ADDITIONAL_SERVICES } from '$lib/stores/calculator';
+  import { calculatorStore, ADDITIONAL_SERVICES, PackageType, PACKAGE_INFO, type CalculatorState } from '$lib/stores/calculator';
+  import { tributeDataStore } from '$lib/stores/tribute-data';
+  import type { TributeData } from '$lib/stores/tribute-data';
   import PackageSelector from './PackageSelector.svelte';
   import ScheduleDay from './ScheduleDay.svelte';
   import LocationForm from './LocationForm.svelte';
@@ -45,6 +47,40 @@
     
     // Set initial step based on parameters (e.g., fd-form might skip to package selection)
     if (source === 'fd-form') {
+      // Load basic service data from tribute data store
+      let scheduleDate = '';
+      let scheduleTime = '';
+      let scheduleDuration = 2;
+      let serviceLocation = null;
+      
+      // Use a one-time subscription to get current data
+      const unsubscribe = tributeDataStore.subscribe(data => {
+        if (data && data.service) {
+          scheduleDate = data.service.date || '';
+          scheduleTime = data.service.time || '';
+          scheduleDuration = data.service.duration || 2;
+          serviceLocation = data.service.location || null;
+        }
+      });
+      unsubscribe(); // Immediately unsubscribe after getting values
+      
+      // Update calculator with data from funeral director form
+      if (scheduleDate && scheduleTime) {
+        calculatorStore.updateSchedule({
+          date: scheduleDate,
+          time: scheduleTime,
+          duration: scheduleDuration,
+          timeZone: 'America/New_York'
+        });
+      }
+      
+      if (serviceLocation) {
+        calculatorStore.updateLocation(serviceLocation);
+      }
+      
+      // Pre-select a standard package by default
+      calculatorStore.selectPackage(PackageType.STANDARD);
+      
       step = 2; // Skip to package selection
     }
   });
@@ -75,14 +111,58 @@
     }
   }
   
-  // Handle payment options
+  // Handle payment options with data transfer to tribute store
   function handlePayNow() {
     if (!canProceedFromCurrentStep()) {
       error = 'Please complete all required fields';
       return;
     }
     
+    // Set payment method in calculator
     calculatorStore.setPaymentMethod('credit_card');
+    
+    // Get current calculator state to save to tribute data store
+    let currentCalcState: CalculatorState | null = null;
+    const unsubCalc = calculatorStore.subscribe(state => {
+      currentCalcState = state;
+    });
+    unsubCalc();
+    
+    // Save calculator data to the tribute data store for checkout page
+    if (currentCalcState) {
+      // Extract needed data from calculator
+      const packageData = currentCalcState.selectedPackage ? {
+        id: PACKAGE_INFO[currentCalcState.selectedPackage].id,
+        name: PACKAGE_INFO[currentCalcState.selectedPackage].name,
+        price: PACKAGE_INFO[currentCalcState.selectedPackage].price,
+        type: currentCalcState.selectedPackage
+      } : null;
+      
+      // Map additional services format
+      const additionalServicesData = currentCalcState.additionalServices.map(service => ({
+        id: service.id,
+        name: service.name,
+        price: service.price,
+        selected: service.isSelected || false
+      }));
+      
+      // Import to tribute data store
+      tributeDataStore.importFromCalculator({
+        selectedPackage: packageData,
+        additionalServices: additionalServicesData,
+        scheduleDetails: currentCalcState.scheduleDetails,
+        payment: {
+          subtotal: currentCalcState.subtotal,
+          tax: currentCalcState.tax,
+          total: currentCalcState.total,
+          discountCode: currentCalcState.promoCode,
+          discountAmount: currentCalcState.discountAmount,
+          method: currentCalcState.paymentMethod
+        }
+      });
+    }
+    
+    // Navigate to checkout
     goto('/checkout');
   }
   
@@ -92,7 +172,45 @@
       return;
     }
     
+    // Set payment method
     calculatorStore.setPaymentMethod('invoice');
+    
+    // Get current calculator state to save to tribute data store
+    let currentCalcState = null;
+    const unsubCalc = calculatorStore.subscribe(state => {
+      currentCalcState = state;
+    });
+    unsubCalc();
+    
+    // Save calculator data to the tribute data store
+    if (currentCalcState) {
+      // Similar to handlePayNow but with invoice payment method
+      const packageData = currentCalcState.selectedPackage ? {
+        id: PACKAGE_INFO[currentCalcState.selectedPackage].id,
+        name: PACKAGE_INFO[currentCalcState.selectedPackage].name,
+        price: PACKAGE_INFO[currentCalcState.selectedPackage].price,
+        type: currentCalcState.selectedPackage
+      } : null;
+      
+      tributeDataStore.importFromCalculator({
+        selectedPackage: packageData,
+        additionalServices: currentCalcState.additionalServices.map(service => ({
+          id: service.id,
+          name: service.name,
+          price: service.price,
+          selected: service.isSelected || false
+        })),
+        scheduleDetails: currentCalcState.scheduleDetails,
+        payment: {
+          subtotal: currentCalcState.subtotal,
+          tax: currentCalcState.tax,
+          total: currentCalcState.total,
+          discountCode: currentCalcState.promoCode,
+          discountAmount: currentCalcState.discountAmount,
+          method: 'invoice'
+        }
+      });
+    }
     
     // Simulate submission
     isSubmitting = true;
