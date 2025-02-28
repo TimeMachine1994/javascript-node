@@ -1,139 +1,127 @@
 <script lang="ts">
-    import type { PageData } from './$types';
-    import type { WPUserData, CalculatorData, PersonalDetails } from '$lib/types/user-metadata';
-    import { enhance, type SubmitFunction } from '$app/forms';
-    import { goto } from '$app/navigation';
-    
-    export let data: PageData;
+  import { page } from '$app/stores';
+  import { Button } from '$lib/components/ui/button';
+  import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
+  
+  // Get slug from URL params
+  let slug = $page.url.searchParams.get('slug') || '';
+  let tributeLink = `http://www.tributestream.com/celebration-of-life-for-${slug}`;
+  
+  // Create email content for copying
+  let emailSubject = "Your Tributestream Memorial Page";
+  let emailBody = `Dear Family,
 
-    // Create a form with enhancement
-    let form: HTMLFormElement;
+We have created a Tributestream memorial page for your loved one, which will allow friends and family who cannot attend in person to participate in the service via live stream.
 
-    function handleSubmit(): SubmitFunction {
-        return async ({ result }) => {
-            if (result.type === 'success') {
-                alert('Form data saved successfully!');
-            } else {
-                alert('Failed to save form data. Please try again.');
-            }
-        };
-    }
+You can view and share the memorial page using this link:
+${tributeLink}
 
-    // Create a mock WPUserData from memorial form data
-    const wpUserData: WPUserData = {
-        displayName: data.userData[0]?.memorial_form_data?.familyMember?.name || '',
-        email: data.userData[0]?.memorial_form_data?.contact?.email || '',
-        nicename: data.userData[0]?.memorial_form_data?.familyMember?.name?.toLowerCase().replace(/\s+/g, '-') || '',
-        roles: ['subscriber'],
-        isAdmin: false,
-        metaResult: {
-            success: true,
-            message: '',
-            user_id: parseInt(data.userData[0]?.user_id || '0'),
-            meta_key: 'memorial_form_data',
-            meta_value: JSON.stringify(data.userData[0]?.memorial_form_data || {})
-        }
-    };
+The family will need to complete payment for this service. You can do this by clicking the "Family Dashboard" link on the memorial page and following the payment instructions.
 
-    // Get preview URL from memorial form data
-    const location = data.userData[0]?.memorial_form_data?.memorial?.location || '';
-    const previewUrl = location.split('-')[1]?.trim() || '';
-    const qrCodeUrl = previewUrl ? 
-        `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(previewUrl)}` : 
-        '';
+If you have any questions, please don't hesitate to contact us.
 
-    // Create initial calculator data from form data
-    const personalDetails: PersonalDetails = {
-        firstName: data.userData[0]?.memorial_form_data?.familyMember?.name?.split(' ')[0] || '',
-        lastName: data.userData[0]?.memorial_form_data?.familyMember?.name?.split(' ')[1] || '',
-        email: data.userData[0]?.memorial_form_data?.contact?.email || '',
-        phone: data.userData[0]?.memorial_form_data?.contact?.phone || '',
-        preferences: {
-            contactMethod: 'email',
-            notifications: true
-        }
-    };
+Sincerely,
+[Funeral Director Name]
+[Funeral Home]`;
 
-    const initialCalculatorData: CalculatorData = {
-        meta: {
-            status: 'draft',
-            lastUpdated: new Date().toISOString(),
-            version: '1.0.0'
-        },
-        scheduleDays: [],
-        selectedPackage: {
-            id: '',
-            name: '',
-            description: '',
-            basePrice: 0,
-            features: []
-        },
-        cart: {
-            items: [],
-            subtotal: 0,
-            total: 0,
-            discounts: [],
-            taxes: []
-        },
-        personalDetails
-    };
-
-    // Function to navigate to calculator with data
-    async function navigateToCalculator() {
-        try {
-            // Store the necessary data in sessionStorage to avoid URL length limitations
-            sessionStorage.setItem('calculatorPrefillData', JSON.stringify({
-                userData: data.userData,
-                wpUserData,
-                calculatorData: initialCalculatorData
-            }));
-            
-            // Navigate to calculator page
-            await goto('/booking-calculator');
-        } catch (error) {
-            console.error('Error navigating to calculator:', error);
-            alert('Failed to proceed to calculator. Please try again.');
-        }
-    }
+  // Generate mailto link
+  let mailtoLink = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+  
+  // Copy link to clipboard
+  function copyLinkToClipboard() {
+    navigator.clipboard.writeText(tributeLink);
+    alert('Link copied to clipboard!');
+  }
+  
+  // Copy email to clipboard
+  function copyEmailToClipboard() {
+    navigator.clipboard.writeText(emailBody);
+    alert('Email template copied to clipboard!');
+  }
 </script>
 
-<form 
-    bind:this={form}
-    method="POST"
-    action="?/saveCalculator"
-    use:enhance={handleSubmit}
-    class="contents"
->
-    <div class="flex flex-col items-center justify-center text-center p-8">
-        <h1 class="text-2xl font-bold mb-6">Memorial Service Confirmation</h1>
-        <p class="text-xl mb-4">Tributestream offers their sincere condolences for your loss.</p>
-        <p class="text-lg mb-6">Scan the QR code below to preview your memorial tribute page.</p>
+<svelte:head>
+  <title>Tribute Created - Confirmation | Tributestream</title>
+  <meta name="description" content="Confirmation page for funeral directors after creating a tribute." />
+</svelte:head>
 
-        <div class="flex justify-center items-center mb-8">
-            <div class="p-6 bg-white rounded-lg shadow-md">
-                {#if previewUrl}
-                    <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                        <img 
-                            src={qrCodeUrl} 
-                            alt="QR Code for memorial preview"
-                            class="w-[100px] h-[100px]"
-                        />
-                    </a>
-                {:else}
-                    <div class="w-[100px] h-[100px] bg-gray-200 rounded-lg flex items-center justify-center text-sm text-gray-500 p-2 text-center">
-                        Preview will be available after setup
-                    </div>
-                {/if}
-            </div>
-        </div>
-
-        <button 
-            type="button"
-            on:click={navigateToCalculator}
-            class="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 mb-2"
-        >
-            Continue to Payment
-        </button>
-        <p class="text-lg">To Complete The Reservation Process</p>
+<div class="container mx-auto px-4 py-12 max-w-4xl">
+  <div class="bg-white rounded-lg shadow-lg p-8">
+    <div class="text-center mb-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      <h1 class="text-3xl font-bold text-gray-800">Tribute Created Successfully!</h1>
+      <p class="text-gray-600 mt-2">
+        The tribute has been created. The family will need to complete the payment process.
+      </p>
     </div>
-</form>
+    
+    <!-- Tribute Link Section -->
+    <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+      <h2 class="text-xl font-semibold mb-2">Tribute Link</h2>
+      <div class="flex items-center">
+        <input 
+          type="text" 
+          readonly 
+          value={tributeLink} 
+          class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white" 
+        />
+        <Button
+          variant="outline"
+          on:click={copyLinkToClipboard}
+          class="ml-2 whitespace-nowrap"
+        >
+          Copy Link
+        </Button>
+      </div>
+    </div>
+    
+    <!-- Email Template Section -->
+    <div class="mb-8">
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="text-xl font-semibold">Email Template for Family</h2>
+        <div class="space-x-2">
+          <Button 
+            variant="outline"
+            on:click={copyEmailToClipboard}
+          >
+            Copy Email
+          </Button>
+          
+          <a href={mailtoLink} class="inline-block">
+            <Button variant="secondary">
+              Open in Email App
+            </Button>
+          </a>
+        </div>
+      </div>
+      
+      <div class="p-4 bg-gray-50 rounded-lg">
+        <div class="border border-gray-300 rounded p-4 bg-white">
+          <p class="font-semibold">Subject: {emailSubject}</p>
+          <hr class="my-2" />
+          <div class="whitespace-pre-wrap">{emailBody}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+      <Button 
+        variant="gold"
+        on:click={() => goto('/')}
+      >
+        Return to Home
+      </Button>
+      
+      <Button 
+        variant="outline"
+        on:click={() => goto('/fd-form')}
+      >
+        Create Another Tribute
+      </Button>
+    </div>
+  </div>
+</div>

@@ -1,35 +1,39 @@
-    import type { PageServerLoad } from './$types';
-    import type { SearchPageData } from './types';
+import { searchTributes, getMockTributes } from '$lib/api/tribute';
+import type { SearchPageData, SearchParams } from './types';
+import type { PageServerLoad } from './$types';
 
-    export const load = (async ({ fetch, url }) => {
-        const page = url.searchParams.get('page') || '1';
-        const per_page = url.searchParams.get('per_page') || '10';
-        const search = url.searchParams.get('search') || '';
-        
-        try {
-            const response = await fetch(`/api/tributes?page=${page}&per_page=${per_page}&search=${search}`);
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Failed to fetch tributes');
-            }
-
-            return {
-                tributes: data.tributes || [],
-                totalPages: data.total_pages || 0,
-                totalItems: data.total_items || 0,
-                currentPage: parseInt(page),
-                searchQuery: search
-            } satisfies SearchPageData;
-        } catch (error) {
-            console.error('Error loading tributes:', error);
-            return {
-                tributes: [],
-                totalPages: 0,
-                totalItems: 0,
-                currentPage: 1,
-                searchQuery: search,
-                error: error instanceof Error ? error.message : 'Failed to load tributes'
-            } satisfies SearchPageData;
-        }
-    }) satisfies PageServerLoad;
+/**
+ * Server load function for the search page
+ * 
+ * This function fetches search results based on the query parameter
+ */
+export const load = (async ({ url }) => {
+  // Get search query from URL
+  const query = url.searchParams.get('q') || '';
+  
+  try {
+    let results = [];
+    
+    if (query) {
+      // For development, use mock data
+      // In production, we'd use the searchTributes API call
+      results = getMockTributes(Math.ceil(Math.random() * 5));
+      
+      // You would use this in production:
+      // results = await searchTributes(query);
+    }
+    
+    return {
+      query,
+      results
+    } satisfies SearchPageData;
+  } catch (error) {
+    console.error('Error in search page load function:', error);
+    
+    return {
+      query,
+      results: [],
+      error: 'An error occurred while searching for tributes. Please try again.'
+    } satisfies SearchPageData;
+  }
+}) satisfies PageServerLoad;

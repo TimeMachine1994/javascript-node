@@ -1,82 +1,171 @@
 <script lang="ts">
-  import type { ScheduleDay, Location } from '$lib/types/user-metadata';
-  import LocationForm from './LocationForm.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '$lib/components/ui/card';
-
-  const DEFAULT_LOCATION: Location = {
-    name: "",
-    address: "",
-    travelExceedsHour: false,
-    startTime: "09:00",
-    duration: 2,
-    notes: ""
-  };
-
-  let { day, dayIndex, onRemove, onAddLocation, onRemoveLocation } = $props<{
-    day: ScheduleDay;
-    dayIndex: number;
-    onRemove: (dayIndex: number) => void;
-    onAddLocation: (dayIndex: number) => void;
-    onRemoveLocation: (dayIndex: number, locationIndex: number) => void;
-  }>();
+  import { calculatorStore } from '$lib/stores/calculator';
+  import { formatDate } from '$lib/utils/format';
+  import FormField from '$lib/components/forms/FormField.svelte';
+  
+  // Schedule state
+  let date = $state('');
+  let time = $state('');
+  let duration = $state(2); // Default 2 hours
+  
+  // Time zones
+  const TIME_ZONES = [
+    { value: 'America/New_York', label: 'Eastern Time (ET)' },
+    { value: 'America/Chicago', label: 'Central Time (CT)' },
+    { value: 'America/Denver', label: 'Mountain Time (MT)' },
+    { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+    { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
+    { value: 'Pacific/Honolulu', label: 'Hawaii Time (HST)' }
+  ];
+  
+  let timeZone = $state(TIME_ZONES[0].value);
+  
+  // Load existing schedule data if available
+  calculatorStore.subscribe(calcState => {
+    const scheduleDetails = calcState.scheduleDetails;
+    date = scheduleDetails.date || '';
+    time = scheduleDetails.time || '';
+    duration = scheduleDetails.duration || 2;
+    timeZone = scheduleDetails.timeZone || TIME_ZONES[0].value;
+  });
+  
+  // Save schedule when form values change
+  $effect(() => {
+    calculatorStore.updateSchedule({
+      date,
+      time,
+      duration,
+      timeZone
+    });
+  });
+  
+  // Validation
+  let dateError = $state<string | null>(null);
+  let timeError = $state<string | null>(null);
+  
+  function validateDate() {
+    if (!date) {
+      dateError = 'Please select a date';
+      return false;
+    }
+    
+    // Check if date is in the future
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+      dateError = 'Please select a future date';
+      return false;
+    }
+    
+    dateError = null;
+    return true;
+  }
+  
+  function validateTime() {
+    if (!time) {
+      timeError = 'Please select a time';
+      return false;
+    }
+    
+    timeError = null;
+    return true;
+  }
+  
+  function validate() {
+    const isDateValid = validateDate();
+    const isTimeValid = validateTime();
+    return isDateValid && isTimeValid;
+  }
 </script>
 
-<Card class="mb-6">
-  <CardHeader>
-    <div class="flex items-center justify-between">
-      <CardTitle>Day {dayIndex + 1}</CardTitle>
-      {#if dayIndex > 0}
-        <Button 
-          variant="destructive" 
-          size="sm" 
-          onclick={() => onRemove(dayIndex)}
-        >
-          Remove Day
-        </Button>
-      {/if}
-    </div>
-  </CardHeader>
+<div class="schedule-day space-y-4">
+  <h3 class="text-xl font-semibold">Service Date & Time</h3>
   
-  <CardContent class="space-y-6">
-    <div class="grid gap-2">
-      <Label for="day-date-{dayIndex}">Date</Label>
-      <Input 
-        id="day-date-{dayIndex}"
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Date selection -->
+    <div>
+      <FormField
+        name="serviceDate"
+        label="Service Date"
         type="date"
-        bind:value={day.date}
+        value={date}
+        error={dateError}
+        required={true}
+        on:input={(e) => {
+          date = (e.currentTarget as HTMLInputElement)?.value || '';
+          validateDate();
+        }}
+        on:blur={validateDate}
       />
     </div>
-
-    <!-- Locations for this day -->
-    <div class="locations space-y-4">
-      <h3 class="text-base font-medium mb-2">Locations</h3>
-      
-      {#each day.locations as location, locationIndex}
-        <LocationForm
-          {location}
-          {dayIndex}
-          {locationIndex}
-          onRemove={onRemoveLocation}
-          isRemovable={locationIndex > 0}
-        />
-      {/each}
-
-      {#if day.locations.length < 3}
-        <Button 
-          variant="outline" 
-          size="sm"
-          onclick={() => onAddLocation(dayIndex)}
-          class="w-full"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-          </svg>
-          Add Location ({day.locations.length}/3)
-        </Button>
-      {/if}
+    
+    <!-- Time selection -->
+    <div>
+      <FormField
+        name="serviceTime"
+        label="Service Time"
+        type="time"
+        value={time}
+        error={timeError}
+        required={true}
+        on:input={(e) => {
+          time = (e.currentTarget as HTMLInputElement)?.value || '';
+          validateTime();
+        }}
+        on:blur={validateTime}
+      />
     </div>
-  </CardContent>
-</Card>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Duration selection -->
+    <div>
+      <label for="serviceDuration" class="block text-sm font-medium text-gray-700 mb-1">
+        Service Duration
+      </label>
+      <select 
+        id="serviceDuration" 
+        name="serviceDuration"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        bind:value={duration}
+      >
+        <option value={1}>1 Hour</option>
+        <option value={2}>2 Hours</option>
+        <option value={3}>3 Hours</option>
+        <option value={4}>4 Hours</option>
+        <option value={5}>5 Hours</option>
+      </select>
+    </div>
+    
+    <!-- Time zone selection -->
+    <div>
+      <label for="timeZone" class="block text-sm font-medium text-gray-700 mb-1">
+        Time Zone
+      </label>
+      <select 
+        id="timeZone" 
+        name="timeZone"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        bind:value={timeZone}
+      >
+        {#each TIME_ZONES as tz}
+          <option value={tz.value}>{tz.label}</option>
+        {/each}
+      </select>
+    </div>
+  </div>
+  
+  <!-- Selected date and time summary -->
+  {#if date && time}
+    <div class="bg-gray-50 p-4 rounded-lg mt-4">
+      <h4 class="font-medium text-gray-700">Service Details</h4>
+      <p class="text-gray-800">
+        {formatDate(date, { format: 'full' })} at {time} 
+        ({TIME_ZONES.find(tz => tz.value === timeZone)?.label}) 
+        for {duration} hour{duration > 1 ? 's' : ''}
+      </p>
+    </div>
+  {/if}
+</div>

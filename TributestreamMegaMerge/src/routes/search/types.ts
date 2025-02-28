@@ -1,10 +1,31 @@
-import type { Tribute } from '$lib/types/api';
+import type { Tribute } from '$lib/types/tribute';
 
+/**
+ * Search page route params
+ */
+export interface SearchParams {
+  /**
+   * Search query parameter
+   */
+  q?: string;
+}
+
+/**
+ * Search page data from server load function
+ */
 export interface SearchPageData {
-    tributes: Tribute[];
-    totalPages: number;
-    totalItems: number;
-    currentPage: number;
-    searchQuery: string;
-    error?: string;
+  /**
+   * Search query from URL
+   */
+  query: string;
+  
+  /**
+   * Search results from API
+   */
+  results: Tribute[];
+  
+  /**
+   * Error message if search failed
+   */
+  error?: string;
 }

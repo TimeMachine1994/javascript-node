@@ -1,6 +1,8 @@
 <script lang="ts">
 	import '../app.css';
  
-	import HomePage from '$lib/components/layout/HomePage.svelte';
+	// Import our new HomePage component
+	import HomePage from '$lib/components/home/HomePage.svelte';
  </script>
+
 <HomePage/>
