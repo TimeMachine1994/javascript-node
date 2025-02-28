@@ -123,6 +123,13 @@ export const load: PageServerLoad = async ({ fetch, cookies }: { fetch: typeof g
         return {
             appId, locationId,
             userMeta: metaObject,
+            // Pass serviceLocations, defaultDate, defaultTime as props
+            serviceLocations: [
+                { name: 'Location 1', address: '123 Main St', city: 'Anytown', state: 'NY', zipCode: '12345' },
+                { name: 'Location 2', address: '456 Elm St', city: 'Otherville', state: 'NJ', zipCode: '67890' }
+            ],
+            defaultDate: '2025-03-15',
+            defaultTime: '10:00 AM'
         };
     } catch (err: unknown) {
         console.error('💥 [BOOKING-CALC] Error in server load function:', err);

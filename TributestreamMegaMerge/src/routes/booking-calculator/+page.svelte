@@ -13,4 +13,11 @@
   <meta name="description" content="Schedule and select options for your memorial service" />
 </svelte:head>
 
-<BookingCalculator {tributeId} {slug} {source} />
+<BookingCalculator
+  {tributeId}
+  {slug}
+  {source}
+  serviceLocations={$page.data.serviceLocations}
+  defaultDate={$page.data.defaultDate}
+  defaultTime={$page.data.defaultTime}
+/>
