@@ -1,5 +1,6 @@
 // Export components
-export { default as MemorialCalculator } from './components/MemorialCalculator.svelte';
+export { default as Calc } from './Calc.svelte';
+export { default as SelectableSquares } from './SelectableSquares.svelte';
 
 // Export types
-export type * from './types/memorial-calculator';
+export type * from './stores/types';

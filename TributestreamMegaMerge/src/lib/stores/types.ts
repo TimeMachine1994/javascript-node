@@ -52,6 +52,7 @@ export interface OrderData {
         address: string;
     };
     details?: OrderDetails;
+    navigationTarget?: 'checkout' | 'family-dashboard'; // Add navigation target property for routing
     lastUpdated: number;
 }
 

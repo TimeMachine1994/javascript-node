@@ -265,66 +265,81 @@
                 <span>Total</span>
                 <span>${cartItems.total}</span>
             </div>
+<!-- Save and Pay Buttons -->
+<form method="POST" class="mt-6 flex flex-col gap-4">
+    <input type="hidden" name="calculatorData" value={JSON.stringify({
+        meta: {
+            // Status will be set by server action depending on which button is clicked
+            lastUpdated: new Date().toISOString(),
+            version: '1.0'
+        },
+        cartItems: cartItems.items,
+        total: cartItems.total,
+        duration: formData.duration,
+        livestreamDate: formData.livestreamDate,
+        livestreamStartTime: formData.livestreamStartTime,
+        locations: formData.locations,
+        selectedPackage: formData.package,
+        funeralHome: {
+            name: formData.funeralHomeName,
+            directorName: formData.funeralDirectorName
+        }
+    })} />
 
-            <!-- Save and Pay Buttons -->
-            <form method="POST" class="mt-6 flex flex-col gap-4">
-                <input type="hidden" name="calculatorData" value={JSON.stringify({
-                    meta: {
-                        // Status will be set by server action depending on which button is clicked
-                        lastUpdated: new Date().toISOString(),
-                        version: '1.0'
+    <div class="payment-options">
+        <h3 class="text-lg font-semibold mb-3">Choose your next step:</h3>
+        
+        <button
+            type="submit"
+            formaction="?/savePayLater"
+            class="w-full bg-gray-700 text-white py-3 px-4 rounded-lg hover:bg-gray-800 mb-3 flex items-center justify-center"
+            onclick={() => {
+                masterStore.updateOrderData({
+                    details: {
+                        cartItems: cartItems.items,
+                        total: cartItems.total,
+                        duration: formData.duration,
+                        livestreamDate: formData.livestreamDate,
+                        livestreamStartTime: formData.livestreamStartTime,
+                        locations: formData.locations
                     },
-                    cartItems: cartItems.items,
-                    total: cartItems.total,
-                    duration: formData.duration,
-                    livestreamDate: formData.livestreamDate,
-                    livestreamStartTime: formData.livestreamStartTime,
-                    locations: formData.locations,
-                    selectedPackage: formData.package,
-                    funeralHome: {
-                        name: formData.funeralHomeName,
-                        directorName: formData.funeralDirectorName
-                    }
-                })} />
+                    navigationTarget: 'family-dashboard'
+                });
+            }}
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L11 6.414V16a1 1 0 11-2 0V6.414L7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3z" />
+            </svg>
+            Save and Pay Later
+            <span class="text-xs block mt-1">You'll be taken to your family dashboard</span>
+        </button>
 
-                <button
-                    formaction="?/savePayLater"
-                    class="w-full bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-800"
-                    onclick={() => {
-                        masterStore.updateOrderData({
-                            details: {
-                                cartItems: cartItems.items,
-                                total: cartItems.total,
-                                duration: formData.duration,
-                                livestreamDate: formData.livestreamDate,
-                                livestreamStartTime: formData.livestreamStartTime,
-                                locations: formData.locations
-                            }
-                        });
-                    }}
-                >
-                    Save and Pay Later
-                </button>
-
-                <button
-                    formaction="?/savePayNow"
-                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-                    onclick={() => {
-                        masterStore.updateOrderData({
-                            details: {
-                                cartItems: cartItems.items,
-                                total: cartItems.total,
-                                duration: formData.duration,
-                                livestreamDate: formData.livestreamDate,
-                                livestreamStartTime: formData.livestreamStartTime,
-                                locations: formData.locations
-                            }
-                        });
-                    }}
-                >
-                    Save and Checkout Now
-                </button>
-            </form>
+        <button
+            type="submit"
+            formaction="?/savePayNow"
+            class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center"
+            onclick={() => {
+                masterStore.updateOrderData({
+                    details: {
+                        cartItems: cartItems.items,
+                        total: cartItems.total,
+                        duration: formData.duration,
+                        livestreamDate: formData.livestreamDate,
+                        livestreamStartTime: formData.livestreamStartTime,
+                        locations: formData.locations
+                    },
+                    navigationTarget: 'checkout'
+                });
+            }}
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h1.17A3 3 0 015 5zm4 1V5a1 1 0 10-2 0v1H5a1 1 0 00-1 1v8a1 1 0 001 1h10a1 1 0 001-1V8a1 1 0 00-1-1h-2.17a3 3 0 01-5.66 0H5z" clip-rule="evenodd" />
+            </svg>
+            Save and Checkout Now
+            <span class="text-xs block mt-1">You'll be taken to secure payment</span>
+        </button>
+    </div>
+</form>
         </div>
     </div>
 </div>

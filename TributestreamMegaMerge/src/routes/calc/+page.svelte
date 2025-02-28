@@ -1,15 +1,15 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import type { CalculatorData } from '$lib/types/user-metadata';
-  import MemorialCalculator from '$lib/components/MemorialCalculator.svelte';
   import { error } from '@sveltejs/kit';
   import { onMount } from 'svelte';
+  import SelectableSquares from '$lib/SelectableSquares.svelte';
+  import Calc from '$lib/Calc.svelte';
+  import { masterStore } from '$lib/stores/userStore';
 
   const props = $props();
   let userData = props.data?.userData;
   let wpUserData = props.data?.wpUserData;
-  let calculatorData: CalculatorData | undefined;
-
+  
   // Try to get data from sessionStorage on mount
   onMount(() => {
     try {
@@ -18,10 +18,42 @@
         const parsedData = JSON.parse(storedData);
         userData = parsedData.userData || userData;
         wpUserData = parsedData.wpUserData || wpUserData;
-        calculatorData = parsedData.calculatorData;
         
         // Clear the session storage after retrieving the data
         sessionStorage.removeItem('calculatorPrefillData');
+        
+        // Initialize user data in the master store
+        if (userData?.[0]?.memorial_form_data) {
+          try {
+            const parsedMemorialData = JSON.parse(userData[0].memorial_form_data);
+            
+            // Update the master store with user data
+            masterStore.updateUserData({
+              userMeta: {
+                memorial_form_data: userData[0].memorial_form_data
+              }
+            });
+            
+            // Initialize order data with memorial information
+            masterStore.updateOrderData({
+              funeralHome: {
+                name: parsedMemorialData.memorial?.locationName || '',
+                address: parsedMemorialData.memorial?.locationAddress || '',
+                directorName: `${parsedMemorialData.director?.firstName || ''} ${parsedMemorialData.director?.lastName || ''}`
+              },
+              memorialLocation: {
+                name: parsedMemorialData.memorial?.locationName || '',
+                address: parsedMemorialData.memorial?.locationAddress || ''
+              },
+              details: {
+                livestreamDate: parsedMemorialData.memorial?.date || '',
+                livestreamStartTime: parsedMemorialData.memorial?.time || ''
+              }
+            });
+          } catch (parseError) {
+            console.error('Error parsing memorial form data:', parseError);
+          }
+        }
       }
     } catch (err) {
       console.error('Error retrieving calculator data from sessionStorage:', err);
@@ -39,15 +71,10 @@
 {#if userData?.length && wpUserData?.metaResult?.user_id}
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-8">Memorial Calculator</h1>
-    <MemorialCalculator
-      data={{ userData, wpUserData }}
-      initialPackage="Solo"
-      initialData={calculatorData}
-      onSave={(orderData) => {
-        // Success is handled by the MemorialCalculator component
-        console.log('Calculator data saved:', orderData);
-      }}
-    />
+    <div class="calculator-container">
+      <SelectableSquares />
+      <Calc initialStartTime={userData[0]?.memorial_form_data?.memorial?.time || ''} />
+    </div>
   </div>
 {:else}
   <div class="container mx-auto px-4 py-8">
@@ -56,5 +83,9 @@
 {/if}
 
 <style lang="postcss">
-  /* Add any component-specific styles here */
+  .calculator-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
 </style>
