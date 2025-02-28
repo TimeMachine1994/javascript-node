@@ -1,16 +1,20 @@
 <script lang="ts">
-	import type { HTMLAttributes } from "svelte/elements";
 	import { cn } from "$lib/utils.js";
 
-	type $$Props = HTMLAttributes<HTMLDivElement>;
+	// Props declaration using Svelte 5 $props rune
+	let props = $props<{
+		class?: string;
+		children?: any;
+		[key: string]: any; // For rest props
+	}>();
 
-	let className: $$Props["class"] = undefined;
-	export { className as class };
+	// Create a derived value for className
+	let className = $derived(props.class);
 </script>
 
 <div
 	class={cn("bg-card text-card-foreground rounded-lg border shadow-sm", className)}
-	{...$$restProps}
+	{...props}
 >
-	<slot />
+	{@render props.children?.()}
 </div>

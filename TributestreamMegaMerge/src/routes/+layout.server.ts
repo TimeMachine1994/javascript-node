@@ -1,203 +1,81 @@
 import type { LayoutServerLoad } from './$types';
-import type { UserMetadata, CalculatorData, Package, WPUserData, WPMemorialFormData } from '$lib/types/user-metadata';
+import { getUserMetadata } from '$lib/stores/userMetaStore';
+import type { UserMetadata, WPUserData } from '$lib/types/user-metadata';
 
 // Define layout data interface
 interface LayoutData {
   userData: UserMetadata[];
   wpUserData?: WPUserData;
+  isAuthenticated: boolean;
+  isAdmin: boolean;
+  userEmail?: string;
+  userDisplayName?: string;
 }
 
-function getDataVersion(wpUserData: WPUserData): string {
-  return wpUserData.metaResult?.version || '1.0.0';
-}
-
-function needsMigration(version: string): boolean {
-  return version !== '2.0.0';
-}
-
-function createDefaultPackage(): Package {
-  return {
-    id: 'Solo',
-    name: 'Solo Package',
-    description: 'Basic memorial package',
-    basePrice: 599,
-    features: []
-  };
-}
-
-function createNewCalculatorData(wpMemorialData: WPMemorialFormData): CalculatorData {
-  return {
-    meta: {
-      status: 'draft',
-      lastUpdated: new Date().toISOString(),
-      version: '2.0.0'
-    },
-    scheduleDays: [{
-      date: wpMemorialData.memorial.date,
-      locations: [{
-        name: wpMemorialData.memorial.locationName,
-        address: wpMemorialData.memorial.locationAddress,
-        startTime: wpMemorialData.memorial.time,
-        duration: 60,
-        travelExceedsHour: false,
-        notes: ''
-      }]
-    }],
-    selectedPackage: createDefaultPackage(),
-    cart: {
-      items: [],
-      subtotal: 599,
-      total: 599,
-      discounts: [],
-      taxes: []
-    },
-    personalDetails: {
-      firstName: wpMemorialData.familyMember.firstName,
-      lastName: wpMemorialData.familyMember.lastName,
-      email: wpMemorialData.contact.email,
-      phone: wpMemorialData.contact.phone,
-      preferences: {
-        contactMethod: 'email',
-        notifications: true
-      }
-    }
-  };
-}
-
-function migrateCalculatorData(oldData: any, wpMemorialData: WPMemorialFormData): CalculatorData {
-  // Start with a fresh calculator data structure
-  const newData = createNewCalculatorData(wpMemorialData);
-
-  // If we have old data, try to preserve relevant information
-  if (oldData) {
-    if (oldData.scheduleDays?.length > 0) {
-      newData.scheduleDays = oldData.scheduleDays;
-    }
-    if (oldData.cartItems?.length > 0) {
-      newData.cart.items = oldData.cartItems.map((item: any) => ({
-        name: item.name,
-        price: item.price
-      }));
-      newData.cart.subtotal = oldData.cartTotal || 599;
-      newData.cart.total = oldData.cartTotal || 599;
-    }
-  }
-
-  return newData;
-}
-
-function handleDataError(error: Error): CalculatorData {
-  return {
-    meta: {
-      status: 'error',
-      lastUpdated: new Date().toISOString(),
-      version: '2.0.0',
-      errors: [error.message]
-    },
-    scheduleDays: [],
-    selectedPackage: createDefaultPackage(),
-    cart: {
-      items: [],
-      subtotal: 0,
-      total: 0,
-      discounts: [],
-      taxes: []
-    },
-    personalDetails: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      preferences: {
-        contactMethod: 'email',
-        notifications: true
-      }
-    }
-  };
-}
-
-export const load: LayoutServerLoad<LayoutData> = async ({ cookies }) => {
-  const userDataCookie = cookies.get('user');
-  console.log('userDataCookie:', userDataCookie);
+export const load: LayoutServerLoad<LayoutData> = async ({ cookies, locals }) => {
+  console.log('🔄 Starting layout.server.ts load function');
   
-  let userDataArray: UserMetadata[] = [];
-  let wpUserData: WPUserData | undefined;
+  // Get the JWT token and user cookie
+  const token = cookies.get('jwt_token');
+  const userCookie = cookies.get('user');
+  
+  console.log('🍪 Token from cookies:', token ? 'Present' : 'Missing');
+  
+  // Default response for unauthenticated users
+  const defaultResponse: LayoutData = {
+    userData: [],
+    wpUserData: undefined,
+    isAuthenticated: false,
+    isAdmin: false
+  };
 
   try {
-    if (userDataCookie) {
-      // Parse the cookie string into WPUserData
-      const parsedWPUserData: WPUserData = JSON.parse(userDataCookie);
-      
-      // Store the WordPress user data
-      wpUserData = {
-        displayName: parsedWPUserData.displayName,
-        email: parsedWPUserData.email,
-        nicename: parsedWPUserData.nicename,
-        roles: parsedWPUserData.roles,
-        isAdmin: parsedWPUserData.roles.includes('administrator'),
-        metaResult: parsedWPUserData.metaResult
-      };
-      
-      // Parse the meta_value string which contains the memorial form data
-      if (wpUserData.metaResult?.meta_value) {
-        const wpMemorialData: WPMemorialFormData = JSON.parse(wpUserData.metaResult.meta_value);
-        const version = getDataVersion(wpUserData);
-        
-        // Create a UserMetadata object with proper structure mapping
-        const userData: UserMetadata = {
-          memorial_form_data: {
-            director: {
-              firstName: wpMemorialData.director.firstName,
-              lastName: wpMemorialData.director.lastName
-            },
-            familyMember: {
-              name: `${wpMemorialData.familyMember.firstName} ${wpMemorialData.familyMember.lastName}`,
-              dob: wpMemorialData.familyMember.dob
-            },
-            deceased: {
-              name: `${wpMemorialData.deceased.firstName} ${wpMemorialData.deceased.lastName}`,
-              dob: wpMemorialData.deceased.dob,
-              dateOfPassing: wpMemorialData.deceased.dop
-            },
-            contact: {
-              email: wpMemorialData.contact.email,
-              phone: wpMemorialData.contact.phone
-            },
-            memorial: {
-              location: `${wpMemorialData.memorial.locationName} - ${wpMemorialData.memorial.locationAddress}`,
-              date: wpMemorialData.memorial.date,
-              time: wpMemorialData.memorial.time
-            }
-          },
-          calculator_data: needsMigration(version) 
-            ? migrateCalculatorData(null, wpMemorialData)
-            : createNewCalculatorData(wpMemorialData)
-        };
-
-        // Add to array
-        userDataArray.push(userData);
-      }
-
-      console.log('Parsed User Data Array:', userDataArray);
+    // Check if the user is authenticated
+    if (!token || !userCookie) {
+      console.log('🚫 No authentication found, returning default data');
+      return defaultResponse;
     }
+
+    // Parse the user cookie to get the user ID and data
+    const parsedWPUserData: WPUserData = JSON.parse(userCookie);
+    const userId = parsedWPUserData.metaResult?.user_id.toString();
+
+    if (!userId) {
+      console.error('❌ User ID not found in cookie data');
+      return defaultResponse;
+    }
+
+    // Store the WordPress user data with admin flag
+    const wpUserData: WPUserData = {
+      displayName: parsedWPUserData.displayName,
+      email: parsedWPUserData.email,
+      nicename: parsedWPUserData.nicename,
+      roles: parsedWPUserData.roles,
+      isAdmin: parsedWPUserData.roles.includes('administrator'),
+      metaResult: parsedWPUserData.metaResult
+    };
+
+    console.log(`👤 Fetching metadata for user ID: ${userId}`);
+    
+    // Use the userMetaStore to get all user metadata
+    const result = await getUserMetadata(userId, token);
+    
+    console.log('✅ User metadata successfully retrieved');
+
+    // Return the data in the format expected by the application
+    return {
+      userData: result.userData,
+      wpUserData: wpUserData,
+      isAuthenticated: true,
+      isAdmin: wpUserData.isAdmin || false,
+      userEmail: wpUserData.email,
+      userDisplayName: wpUserData.displayName
+    };
   } catch (error) {
-    console.error('Error parsing userData cookie:', error);
-    if (error instanceof Error) {
-      userDataArray.push({
-        memorial_form_data: {
-          director: { firstName: '', lastName: '' },
-          familyMember: { name: '', dob: '' },
-          deceased: { name: '', dob: '', dateOfPassing: '' },
-          contact: { email: '', phone: '' },
-          memorial: { location: '', date: '', time: '' }
-        },
-        calculator_data: handleDataError(error)
-      });
-    }
-  }
+    // Log the error for debugging
+    console.error('💥 Error in layout.server.ts load function:', error);
 
-  return {
-    userData: userDataArray,
-    wpUserData // Include WordPress user data in the response
-  };
+    // Return default data in case of error
+    return defaultResponse;
+  }
 };
